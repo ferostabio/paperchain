@@ -1,10 +1,11 @@
-var Documenter = artifacts.require("./Documenter.sol")
-var fs = require("fs")
-var crypto = require("crypto")
+const Documenter = artifacts.require("./Documenter.sol")
+const fs = require("fs")
+const crypto = require("crypto")
 
-var testFileName = "masque.txt"
-var testFilePath = "./assets/" + testFileName
-var defaultErrorMessage = "Call shouldn't succeed"
+const testFileName = "masque.txt"
+const testFilePath = "./assets/" + testFileName
+const defaultErrorMessage = "Call shouldn't succeed"
+const testFileStorageHash = "QmPTHYApwdcyMvHHvwCqvu7sZwjw7kuMGTMEQFzdKKA1my"
 
 function hashTestFile() {
   return new Promise((resolve, reject) => {
@@ -24,7 +25,7 @@ function watchDocuments(documenter, account, currentBlock, fileHash, testFileNam
       resolve(error)
       event.stopWatching()
     })
-    documenter.notarizeDocument(fileHash, testFileName, Date.now(), defaultTx)
+    documenter.notarizeDocument(fileHash, testFileName, testFileStorageHash, Date.now(), defaultTx)
   })
 }
 
@@ -46,11 +47,23 @@ contract("Documenter", accounts => {
     }).then(exists => {
       assert.isNotOk(exists, "Hash already exists")
       now = Date.now()
-      return documenter.notarizeDocument(fileHash, testFileName, now, defaultTx)
+      return documenter.notarizeDocument(fileHash, testFileName, testFileStorageHash, now, defaultTx)
     }).then(() => {
       return documenter.documentExists.call(fileHash)
     }).then(exists => {
       assert.isOk(exists, "Didn't add hash")
+    })
+  })
+
+  it("should properly store document data", () => {
+    return Documenter.deployed().then(instance => {
+      return instance.getDocumentData(fileHash, defaultTx)
+    }).then(args => {
+      assert.equal(web3.toAscii(args[0]), testFileName, "Wrong file name")
+      assert.equal(web3.toAscii(args[1]), fileHash, "File hash different")
+      assert.equal(web3.toAscii(args[2]), testFileStorageHash, "Storage hash different")
+      assert.equal(args[3], defaultAccount, "File owner not stored correctly")
+      assert.equal(args[4].toNumber(), now, "Wrong date")
     })
   })
 
@@ -61,22 +74,11 @@ contract("Documenter", accounts => {
       return documenter.userExists.call(defaultAccount)
     }).then(exists => {
       assert.isNotOk(exists, "User already exists")
-      return documenter.notarizeDocument(fileHash, testFileName, now, defaultTx)
+      return documenter.notarizeDocument(fileHash, testFileName, testFileStorageHash, now, defaultTx)
     }).then(() => {
       return documenter.userExists.call(defaultAccount)
     }).then(exists => {
       assert.isOk(exists, "Didn't add user")
-    })
-  })
-
-  it("should properly store document data", () => {
-    return Documenter.deployed().then(instance => {
-      return instance.getDocumentData(fileHash, defaultTx)
-    }).then(args => {
-      assert.equal(web3.toAscii(args[0]), testFileName, "Wrong file name")
-      assert.equal(web3.toAscii(args[1]), fileHash, "File hash different")
-      assert.equal(args[2], defaultAccount, "File owner not stored correctly")
-      assert.equal(args[3].toNumber(), now, "Wrong date")
     })
   })
 
@@ -100,7 +102,7 @@ contract("Documenter", accounts => {
 
   it("a user shouldn't be able to add an existing document", () => {
     return Documenter.deployed().then(instance => {
-      return instance.notarizeDocument(fileHash, testFileName, Date.now(), defaultTx)
+      return instance.notarizeDocument(fileHash, testFileName, testFileStorageHash, Date.now(), defaultTx)
     }).then(success => {
 		      assert(false, "User added an existing document")
        }, error => {

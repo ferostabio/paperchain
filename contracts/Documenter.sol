@@ -15,6 +15,7 @@ contract Documenter {
     bool exists;
     address owner;
     bytes name;
+    bytes multihash;
     bytes32 hash;
     uint added;
   }
@@ -32,7 +33,7 @@ contract Documenter {
 
   // Events
 
-  event LogNewDocument(address ddr, bytes32 hsh, uint tmstmp);
+  event LogNewDocument(bytes name, bytes32 hash, bytes multihash, address owner, uint timestamp);
 
   // Modifiers
 
@@ -49,8 +50,8 @@ contract Documenter {
 
   // Document
 
-  function notarizeDocument(bytes32 hash, bytes name, uint timestamp) public isNewDocument(hash) returns (bool) {
-    Document memory document = Document({owner: msg.sender, name: name, hash: hash, added: timestamp, exists: true});
+  function notarizeDocument(bytes32 hash, bytes name, bytes multihash, uint timestamp) public isNewDocument(hash) returns (bool) {
+    Document memory document = Document({owner: msg.sender, name: name, hash: hash, multihash: multihash, added: timestamp, exists: true});
     storeDocument(document);
   }
 
@@ -67,16 +68,16 @@ contract Documenter {
     user.documentList.push(document.hash);
     user.numberOfDocuments++;
 
-    LogNewDocument(document.owner, document.hash, document.added);
+    LogNewDocument(document.name, document.hash, document.multihash, document.owner, document.added);
   }
 
   function documentExists(bytes32 hash) public view returns (bool) {
     return poe[hash].exists;
   }
 
-  function getDocumentData(bytes32 hash) public view isDocumentOwner(hash, msg.sender) returns (bytes, bytes32, address, uint) {
+  function getDocumentData(bytes32 hash) public view isDocumentOwner(hash, msg.sender) returns (bytes name, bytes32 fileHash, bytes multihash, address owner, uint timestamp) {
     Document memory document = poe[hash];
-    return (document.name, document.hash, document.owner, document.added);
+    return (document.name, document.hash, document.multihash, document.owner, document.added);
   }
 
   // User
