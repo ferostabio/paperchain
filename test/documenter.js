@@ -20,7 +20,7 @@ function hashTestFile() {
 
 function watchDocuments(documenter, account, currentBlock, fileHash, testFileName, defaultTx) {
   return new Promise((resolve, reject) => {
-    var event = documenter.LogNewDocument({ddr: account}, {fromBlock: currentBlock, toBlock: "latest"})
+    var event = documenter.LogNewDocument({owner: account}, {fromBlock: currentBlock, toBlock: "latest"})
     event.watch((error, result) => {
       resolve(error)
       event.stopWatching()
