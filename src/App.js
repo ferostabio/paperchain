@@ -12,14 +12,11 @@ import promisify from './utils/promisify'
 
 // Components
 import AddFileForm from './components/AddFileForm'
-//import AddVoterForm from './components/AddVoterForm'
-//import Header from './components/Header'
-//import LogsList from './components/LogsList'
-//import ProposalsList from './components/ProposalsList'
+import DocumentList from './components/DocumentList'
+import DocumentReader from './components/DocumentReader'
 
 const CryptoJS = require("crypto-js")
 const storage = require("./storage.js")
-
 
 const styles = {
   main: {
@@ -35,19 +32,18 @@ export default class App extends Component {
     // Set default state
     this.state = {
       documents: [],
-      logs: [],
       defaultAccount: undefined,
       documenterInstance: undefined,
-      errorMessage: undefined,
       web3: undefined,
-      id: undefined,
-      version: undefined,
-      protocol: undefined
+      storage_id: undefined,
+      storage_version: undefined,
+      storage_protocol: undefined,
+      fileName: undefined,
+      fileContents: undefined
     }
   }
 
   componentWillMount() {
-    console.log("mount")
     this.initialize()
     .then(() => {
       this.watchNewDocuments()
@@ -57,8 +53,6 @@ export default class App extends Component {
   async initialize() {
     const { web3 } = await getWeb3
 
-    console.log("account:")
-    // Create voting entity from contract abi
     const documenter = Contract(Documenter)
     documenter.setProvider(web3.currentProvider)
     const accounts = await promisify(web3.eth.getAccounts)
@@ -68,17 +62,16 @@ export default class App extends Component {
 
     const documenterInstance = await documenter.deployed()
 
-    storage.start('ipfs-' + Math.random()).then(error => {
+    storage.start('ipfs-edgar_allen').then(error => {
       console.log("started ipfs")
       return storage.id()
     }).then(info => {
       this.setState({
-          id: info[0],
-          version: info[1],
-          protocol: info[2]
-        })
+        storage_id: info[0],
+        storage_version: info[1],
+        storage_protocol: info[2]
+      })
     })
-
 
     this.setState({
       ...this.state,
@@ -86,34 +79,21 @@ export default class App extends Component {
       defaultAccount,
       documenterInstance,
     })
-    //
     this.loadDocuments()
   }
 
-
-
-  async onFileAdd(file) {
+  onFileAdd(file) {
+    if (this.state.storage_id === undefined) {
+      alert("Please wait for IPFS to finish loading")
+    }
     const { web3, documenterInstance, defaultAccount } = this.state
 
-    console.log('Name: ', file.name);
-
     var reader = new FileReader();
-
-
-    reader.onload = function(event) {
+    reader.onload = event => {
       if (event === undefined) return
       const binary = event.target.result;
       var md5 = CryptoJS.MD5(binary).toString()
-      console.log(md5);
 
-      documenterInstance.documentExists.call(md5).then(exists => {
-        if (exists) {
-          alert("Document already exists")
-        } else {
-          documenterInstance.notarizeDocument(md5, file.name, "multihash", Date.now(), { from: defaultAccount })
-        }
-      })
-/*
       documenterInstance.documentExists.call(md5).then(exists => {
         if (exists) {
           alert("Document already exists")
@@ -121,21 +101,10 @@ export default class App extends Component {
           return storage.add(file.name, Buffer.from(binary))
         }
       }).then(multihash => {
-        console.log(multihash)
-        return storage.get(multihash)
-      }).then(content => {
-        var string = String.fromCharCode.apply(null, content[0])
-        return documenterInstance.notarizeDocument(md5, file.name, multihash, Date.now(), { from: defaultAccount })
-      }).then(() => {
-        return documenterInstance.documentExists.call(md5)
-      }).then(exists => {
-        if (exists) {
-          console.log("osom")
-        } else {
-          alert("something went wrong")
+        if (multihash !== undefined) {
+          documenterInstance.notarizeDocument(md5, file.name, multihash, Date.now(), { from: defaultAccount })
         }
       })
-*/
     }
     reader.readAsBinaryString(file)
   }
@@ -143,56 +112,67 @@ export default class App extends Component {
   async loadDocuments() {
     const { web3, documenterInstance, defaultAccount } = this.state
 
-    console.log(`It's about to load documents for account ${defaultAccount}`)
-    console.log(`Documenter instance address: ${documenterInstance.address}`)
-
     try {
-      // TODO:
-      /*
-      const hashesInBytes32 = await documenterInstance.getProposals.call(defaultAccount)
-      const proposals = proposalsInBytes32.map((proposal) => web3.toAscii(proposal).replace(/\u0000/g, ''))
+      const hashesInBytes32 = await documenterInstance.getUserDocuments.call(defaultAccount)
+      const documents = hashesInBytes32.map((hash) => web3.toAscii(hash))
       this.setState({
-      ...this.state,
-      proposals,
-    })*/
-  } catch (error) {
-    console.log(`Error loading documents: ${error}`)
-  }
-}
-
-watchNewDocuments() {
-  const { web3, documenterInstance, defaultAccount } = this.state
-
-  documenterInstance.LogNewDocument({owner: defaultAccount}).watch((error, result) => {
-    if (error) {
-      console.log(`Nooooo! ${error}`)
-    } else {
-      console.log(`Result ${JSON.stringify(result.args)}`)
-      // TODO:
-      /*
-      const proposalInBytes32 = result.args.proposal
-      const proposal = web3.toAscii(proposalInBytes32).replace(/\u0000/g, '')
-      this.setState({...this.state, proposals: [...this.state.proposals, proposal]})
-      this.log(`New proposal added: ${proposal}`)*/
+        ...this.state,
+        documents,
+      })
+    } catch (error) {
+      console.log(`Error loading documents: ${error}`)
     }
-  })
-}
+  }
 
-log(text) {
-  this.setState({...this.state, logs: [...this.state.logs, text]})
-}
+  async watchNewDocuments() {
+    const { web3, documenterInstance, defaultAccount } = this.state
 
-onDocumentAdded(document) {
-  const { documenterInstance, defaultAccount } = this.state
-  console.log(`
-    It's about upload a new document: ${document}.
-    The default account is ${defaultAccount}
-    The documenter instance address is ${documenterInstance.address}
-    `)
-    // TODO:
-    /*
-    votingInstance.addProposal(proposal, { from: defaultAccount })
-    */
+    // Class assistant said, in order to test watching of events, i should mine a block. But metamask complains call needs a callback function even after adding one
+    // web3.currentProvider.send({jsonrpc: "2.0", method: "evm_mine", params: [], id: 0})
+
+    var blockNumber = await promisify(web3.eth.getBlockNumber)
+    console.log('block number: ' + blockNumber)
+    documenterInstance.LogNewDocument({owner: defaultAccount}, {fromBlock: blockNumber, toBlock: "latest"}).watch((error, result) => {
+      if (error) {
+        console.log(`Nooooo! ${error}`)
+      } else {
+        console.log(`Result ${JSON.stringify(result.args)}`)
+
+        const hashInBytes32 = result.args.hash
+        const hash = web3.toAscii(hashInBytes32)
+
+        if (!this.state.documents.includes(hash)) {
+          this.setState({...this.state, documents: [...this.state.documents, hash]})
+        }
+      }
+    })
+  }
+
+  readBlob(blob, callback) {
+    var bb = new Blob(blob)
+    var f = new FileReader()
+    f.onload = e => {
+      callback(e.target.result)
+    }
+    f.readAsText(bb)
+  }
+
+  onRead(hash) {
+    if (this.state.storage_id === undefined) {
+      alert("Please wait for IPFS to finish loading")
+    }
+    const { web3, documenterInstance, defaultAccount } = this.state
+
+    var name
+    documenterInstance.getDocumentData(hash, {from: defaultAccount}).then(args => {
+      name = web3.toAscii(args[0])
+      var multihash = web3.toAscii(args[2])
+      return storage.get(multihash)
+    }).then(raw => {
+      this.readBlob(raw, contents => {
+        this.setState({...this.state, fileName: name, fileContents: contents})
+      })
+    })
   }
 
   render() {
@@ -201,10 +181,13 @@ onDocumentAdded(document) {
       <h1>Edgar Allen</h1>
       <hr/>
       <AddFileForm onFileAdd={this.onFileAdd.bind(this)} />
-      <p>Your ID is <strong>{this.state.id}</strong></p>
-      <p>Your IPFS version is <strong>{this.state.version}</strong></p>
-      <p>Your IPFS protocol version is <strong>{this.state.protocol}</strong></p>
+      <p>Your ID is <strong>{this.state.storage_id}</strong></p>
+      <p>Your IPFS version is <strong>{this.state.storage_version}</strong></p>
+      <p>Your IPFS protocol version is <strong>{this.state.storage_protocol}</strong></p>
       <hr/>
+      <DocumentList documents={this.state.documents} onRead={this.onRead.bind(this)}/>
+      <hr/>
+      <DocumentReader name={this.state.fileName} contents={this.state.fileContents}/>
       </div>
     )
   }
