@@ -3,8 +3,9 @@ const IPFS = require("ipfs")
 var node = undefined
 var nodePath = undefined
 
-// As basic as it gets
+// IPFS proxy: as basic as it gets, currently. Almost no error handling, etc
 
+// function that starts a node, with a path param
 module.exports.start = path => {
   return new Promise((resolve, reject) => {
     node = new IPFS({ repo:  path})
@@ -18,6 +19,7 @@ module.exports.start = path => {
   })
 }
 
+// function that returns a node's info such as id, agent and protocol versions
 module.exports.id = () => {
   return new Promise((resolve, reject) => {
     node.id((err, res) => {
@@ -26,6 +28,10 @@ module.exports.id = () => {
   })
 }
 
+/*
+ * function that adds a file to IPFS: it takes a string name and a file's
+ * contents buffer and returns the files's multihash after uploading completes
+ */
 module.exports.add = (name, buffer) => {
   return new Promise((resolve, reject) => {
     node.files.add({
@@ -38,6 +44,7 @@ module.exports.add = (name, buffer) => {
   })
 }
 
+// function that gets a file from IPFS, with it's multihash as param
 module.exports.get = hash => {
   return new Promise((resolve, reject) => {
     node.files.get(hash, (err, stream) => {
@@ -57,6 +64,7 @@ module.exports.get = hash => {
   })
 }
 
+// function that cats a file from IPFS, with it's multihash as param
 module.exports.cat = hash => {
   return new Promise((resolve, reject) => {
     node.files.cat(hash, (err, stream) => {
@@ -74,6 +82,7 @@ module.exports.cat = hash => {
   })
 }
 
+// function that stops the running node
 module.exports.stop = () => {
   return new Promise((resolve, reject) => {
     node.removeAllListeners()

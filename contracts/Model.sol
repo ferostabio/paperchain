@@ -1,11 +1,11 @@
 pragma solidity ^0.4.17;
 
-/*
- * Added Model library in order to reuse structs across contracts.
- * This isn't needed. At all. Currently, Authentication.sol uses User
- * and Documenter.sol uses Document. But i wanted to use a library :D
- */
-
+ /**
+  * @title Model library
+  * @notice Created in order to reuse structs across contracts.
+  * @notice Completely unnecessary though, will probablyy remove it and
+  * @notice move each to it's own contract (User to Auth... and Document to Docu...)
+  */
 library Model {
 
   struct User {

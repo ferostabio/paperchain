@@ -1,6 +1,8 @@
 const fs = require("fs")
 const crypto = require("crypto")
 
+// fs related code, used in some placess across the app
+
 module.exports.hashFile = path => {
   return new Promise((resolve, reject) => {
     var shasum = crypto.createHash("md5")
