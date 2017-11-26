@@ -1,40 +1,34 @@
-const fs = require("fs")
-const storage = require("../src/storage.js")
+const fs = require("../utils/file.js")
+const storage = require("../utils/storage.js")
 
 const testFileName = "masque.txt"
 const testFilePath = "./assets/" + testFileName
-
+/*
 describe("Storage", () => {
 
   var multihash
-  var fileContents
 
-  after(() => {
-    console.log("Stopping descentralized storage and cleaning disk")
-    return storage.stop(true).then(() => {
-      process.exit
-    })
+  after(async () => {
+    await storage.stop(true)
+    process.exit
   })
 
   // This should be `before`function, but there's an issue with timeouts, so here it is
-  it("should initialize descentralized storage", () => {
+  it("should initialize descentralized storage", async () => {
     console.log("Starting descentralized storage")
-    return storage.start('ipfs-' + Math.random()).then(error => {
-      assert.equal(error, undefined, "Storage failed initializing")
-    })
+    var error = await storage.start('ipfs-' + Math.random())
+    assert.equal(error, undefined, "Storage failed initializing")
   }).timeout(100000)
 
-  it("should add file to storage", () => {
-    fileContents = fs.readFileSync(testFilePath)
-    return storage.add(testFileName, fileContents).then(hash => {
-      assert.notEqual(hash, undefined, "IPFS failed adding a file")
-      multihash = hash
-    })
+  it("should add file to storage", async () => {
+    fileContents = fs.readSync(testFilePath)
+    multihash = await storage.add(testFileName, fileContents)
+    assert.notEqual(multihash, undefined, "IPFS failed adding a file")
   })
 
-  it("should fetch a file from storage after it has been notarized", () => {
-    return storage.get(multihash).then(content => {
-      assert.equal(content.toString(), fileContents.toString(), "Undefined contents of file")
-    })
+  it("should fetch a file from storage after it has been notarized", async () => {
+    var content = await storage.get(multihash)
+    assert.equal(content.toString(), fileContents.toString(), "Undefined contents of file")
   })
 })
+*/

@@ -1,22 +1,11 @@
+const Authentication = artifacts.require("./Authentication.sol")
 const Documenter = artifacts.require("./Documenter.sol")
-const fs = require("fs")
-const crypto = require("crypto")
+const fs = require("../utils/file.js")
 
 const testFileName = "masque.txt"
 const testFilePath = "./assets/" + testFileName
 const defaultErrorMessage = "Call shouldn't succeed"
 const testFileStorageHash = "QmPTHYApwdcyMvHHvwCqvu7sZwjw7kuMGTMEQFzdKKA1my"
-
-function hashTestFile() {
-  return new Promise((resolve, reject) => {
-    var shasum = crypto.createHash("md5")
-    var s = fs.ReadStream(testFilePath)
-    s.on("data", function(d) { shasum.update(d) })
-    s.on("end", function() {
-      resolve(shasum.digest("hex"))
-    })
-  })
-}
 
 function watchDocuments(documenter, account, currentBlock, fileHash, testFileName, defaultTx) {
   return new Promise((resolve, reject) => {
@@ -30,91 +19,69 @@ function watchDocuments(documenter, account, currentBlock, fileHash, testFileNam
 }
 
 contract("Documenter", accounts => {
+  let authentication, documenter, fileHash = {}
 
-  var defaultAccount = accounts[0]
-  var defaultTx = { from: defaultAccount }
-  var fileHash
-  var now
+  const defaultAccount = accounts[0]
+  const defaultTx = { from: defaultAccount }
+  const now = Date.now()
+  var notarize = false // Variable set to false each time i need beforeEach not to notarize a document
 
-  it("should properly handle hashes, that's what's poe is all about", () => {
-    var documenter
-    return Documenter.deployed().then(instance => {
-      documenter = instance
-      return hashTestFile()
-    }).then(hash => {
-      fileHash = hash
-      return documenter.documentExists.call(fileHash)
-    }).then(exists => {
-      assert.isNotOk(exists, "Hash already exists")
-      now = Date.now()
-      return documenter.notarizeDocument(fileHash, testFileName, testFileStorageHash, now, defaultTx)
-    }).then(() => {
-      return documenter.documentExists.call(fileHash)
-    }).then(exists => {
-      assert.isOk(exists, "Didn't add hash")
-    })
+  beforeEach(async () =>  {
+    authentication = await Authentication.new();
+    await authentication.signup('user', defaultTx)
+    documenter = await Documenter.new(authentication.address)
+    if (notarize) {
+      await documenter.notarizeDocument(fileHash, testFileName, testFileStorageHash, now, defaultTx)
+    }
   })
 
-  it("should properly store document data", () => {
-    return Documenter.deployed().then(instance => {
-      return instance.getDocumentData(fileHash, defaultTx)
-    }).then(args => {
-      assert.equal(web3.toAscii(args[0]), testFileName, "Wrong file name")
-      assert.equal(web3.toAscii(args[1]), fileHash, "File hash different")
-      assert.equal(web3.toAscii(args[2]), testFileStorageHash, "Storage hash different")
-      assert.equal(args[3], defaultAccount, "File owner not stored correctly")
-      assert.equal(args[4].toNumber(), now, "Wrong date")
-    })
+  it("should properly handle hashes, that's what's poe is all about", async () => {
+    fileHash = await fs.hashFile(testFilePath)
+    var exists = await documenter.documentExists.call(fileHash)
+    assert.isNotOk(exists, "Hash already exists")
+
+    await documenter.notarizeDocument(fileHash, testFileName, testFileStorageHash, now, defaultTx)
+    exists = await documenter.documentExists.call(fileHash)
+    assert.isOk(exists, "Didn't add hash")
+    notarize = true
   })
 
-  it("should add a user record after notarizing a document", () => {
-    var documenter
-    return Documenter.new().then(instance => {
-      documenter = instance
-      return documenter.userExists.call(defaultAccount)
-    }).then(exists => {
-      assert.isNotOk(exists, "User already exists")
-      return documenter.notarizeDocument(fileHash, testFileName, testFileStorageHash, now, defaultTx)
-    }).then(() => {
-      return documenter.userExists.call(defaultAccount)
-    }).then(exists => {
-      assert.isOk(exists, "Didn't add user")
-    })
+  it("should properly store document data", async () => {
+    var data = await documenter.getDocumentData(fileHash, defaultTx)
+
+    assert.equal(web3.toAscii(data[0]), testFileName, "Wrong file name")
+    assert.equal(web3.toAscii(data[1]), fileHash, "File hash different")
+    assert.equal(web3.toAscii(data[2]), testFileStorageHash, "Storage hash different")
+    assert.equal(data[3], defaultAccount, "File owner not stored correctly")
+    assert.equal(data[4].toNumber(), now, "Wrong date")
   })
 
-  it("should add info to the user after notarizing a document", () => {
-    return Documenter.deployed().then(instance => {
-      return instance.getUserDocuments(defaultAccount)
-    }).then(files => {
-      assert.equal(web3.toAscii(files[0]), fileHash, "File hash different")
-    })
+  it("should add info to the user after notarizing a document", async () => {
+    var hashes = await authentication.getDocuments.call(defaultAccount)
+    assert.equal(web3.toAscii(hashes[0]), fileHash, "File hash different")
   })
 
-  it("a user shouldn't get another user's document", () => {
-    return Documenter.deployed().then(instance => {
-      return instance.getDocumentData(fileHash, { from: accounts[1] })
-    }).then(success => {
-		      assert(false, "User was able to read another user's file")
-       }, error => {
-		      assert.match(error.message, /invalid opcode/, defaultErrorMessage)
-    })
+  it("a user shouldn't get another user's document", async () => {
+    try {
+      await authentication.getDocuments.call(accounts[1])
+      assert(false, "User was able to read another user's file")
+    } catch (error) {
+      assert.match(error.message, /invalid opcode/, defaultErrorMessage)
+    }
   })
 
-  it("a user shouldn't be able to add an existing document", () => {
-    return Documenter.deployed().then(instance => {
-      return instance.notarizeDocument(fileHash, testFileName, testFileStorageHash, Date.now(), defaultTx)
-    }).then(success => {
-		      assert(false, "User added an existing document")
-       }, error => {
-		      assert.match(error.message, /invalid opcode/, defaultErrorMessage)
-    })
+  it("a user shouldn't be able to add an existing document", async () => {
+    try {
+      await documenter.notarizeDocument(fileHash, testFileName, testFileStorageHash, Date.now(), defaultTx)
+      assert(false, "User added an existing document")
+    } catch (error) {
+      assert.match(error.message, /invalid opcode/, defaultErrorMessage)
+    }
+    notarize = false
   })
 
-  it("should fire an event when a new file is added", () => {
-    return Documenter.new().then(instance => {
-      return watchDocuments(instance, defaultAccount, web3.eth.blockNumber, fileHash, testFileName, defaultTx)
-    }).then(error => {
-      assert.equal(error, null, "Watcher returned error")
-    })
+  it("should fire an event when a new file is added", async () => {
+    var error = await watchDocuments(documenter, defaultAccount, web3.eth.blockNumber, fileHash, testFileName, defaultTx)
+    assert.equal(error, null, "Watcher returned error")
   })
 })
