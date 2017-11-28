@@ -104,7 +104,7 @@ export default class App extends Component {
     this.loadDocuments()
   }
 
-  onFileAdd(file) {
+  onFileAdd(file, visibility) {
     // check if IPFS setup has completed
     if (this.state.storage_id === undefined) {
       alert("Please wait for IPFS to finish loading")
@@ -133,8 +133,7 @@ export default class App extends Component {
       }).then(multihash => {
         // and then... let's add it to the blockchain
         if (multihash !== undefined) {
-          // TODO: visibility set to true by default, will add a checkbox for it
-          documenterInstance.notarizeDocument(md5, file.name, multihash, true, Date.now(), { from: defaultAccount })
+          documenterInstance.notarizeDocument(md5, file.name, multihash, visibility, Date.now(), { from: defaultAccount })
         }
       })
     }
@@ -147,6 +146,7 @@ export default class App extends Component {
     try {
       const hashesInBytes32 = await authenticationInstance.getDocuments.call(defaultAccount)
       const documents = hashesInBytes32.map((hash) => web3.toAscii(hash))
+      console.log(documents)
       this.setState({
         ...this.state,
         documents,
@@ -199,15 +199,18 @@ export default class App extends Component {
     var name
     documenterInstance.getDocumentData(hash, {from: defaultAccount}).then(args => {
       name = web3.toAscii(args[0])
-      // TODO: will have to check visibility status and that multihash ain't empty before continuing
       var multihash = web3.toAscii(args[2])
-      // get the document from IPFS
-      return Storage.get(multihash)
+      if (args[3] === true && multihash !== "") {
+        // get the document from IPFS
+        return Storage.get(multihash)
+      }
     }).then(raw => {
       // update the app's state with the file name and contents
-      this.readBlob(raw, contents => {
-        this.setState({...this.state, fileName: name, fileContents: contents})
-      })
+      if (raw !== undefined) {
+        this.readBlob(raw, contents => {
+          this.setState({...this.state, fileName: name, fileContents: contents})
+        })
+      }
     })
   }
 
