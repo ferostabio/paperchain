@@ -20,13 +20,13 @@ contract Authentication is Ownable {
   /**
    * @dev event for a user signup
    * @param name of the user
-   * @param usser address
+   * @param user address
    */
   event LogSignup(bytes name, address user);
 
   /**
    * @dev modifier that checks if a user exists
-   * @param _hash of the document
+   * @param _user address
    */
   modifier isExistingUser(address _user) {
     require(userExists(_user));
@@ -44,7 +44,7 @@ contract Authentication is Ownable {
 
   /**
    * @dev function that checks if a user exists
-   * @param _sender, user's address
+   * @param _sender address
    * @return a boolean value indicating if the user exists
    */
   function userExists(address _sender) public view returns (bool) {
@@ -74,7 +74,7 @@ contract Authentication is Ownable {
 
   /**
    * @dev function that adds a document to a user
-   * @param _owner, user's address
+   * @param _owner address
    * @param _hash of the document
    */
   function addDocument(address _owner, bytes32 _hash) public isExistingUser(_owner) {
@@ -85,7 +85,7 @@ contract Authentication is Ownable {
 
   /**
    * @dev function that returns a user's documents
-   * @param _source, user's address
+   * @param _source address
    * @return a bytes32 array containing the user's registered hashes
    */
   function getDocuments(address _source) public view isExistingUser(_source) returns (bytes32[]) {

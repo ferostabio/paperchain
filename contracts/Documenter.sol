@@ -26,11 +26,11 @@ contract Documenter is Ownable {
    * @dev event for the registration of a new document
    * @param name of the new document
    * @param hash of the new document
-   * @param multihash of the new document's IPFS storage
-   * @param address of the new document's creator
+   * @param owner address
+   * @param visibility of the document
    * @param timestamp of the new document
    */
-  event LogNewDocument(bytes name, bytes32 hash, bytes multihash, address owner, uint timestamp);
+  event LogNewDocument(bytes name, bytes32 hash, address owner, bool visibility, uint timestamp);
 
   /**
    * @dev modifier that checks if a document is new
@@ -44,7 +44,7 @@ contract Documenter is Ownable {
   /**
    * @dev modifier that checks if a user is the owner of a document
    * @param _hash of the document
-   * @param _owner, address of the user claiming ownership
+   * @param _owner address of the user claiming ownership
    */
   modifier isDocumentOwner(bytes32 _hash, address _owner) {
     require(documentExists(_hash));
@@ -65,10 +65,11 @@ contract Documenter is Ownable {
    * @param _hash of the document
    * @param _name of the document
    * @param _multihash of the document's IPFS storage
-   * @param _owner, address of the user claiming ownership
+   * @param _visibility of the document
+   * @param _timestamp of the document
    */
-  function notarizeDocument(bytes32 _hash, bytes _name, bytes _multihash, uint _timestamp) public isNewDocument(_hash) {
-    Model.Document memory document = Model.Document({owner: msg.sender, name: _name, hash: _hash, multihash: _multihash, added: _timestamp});
+  function notarizeDocument(bytes32 _hash, bytes _name, bytes _multihash, bool _visibility, uint _timestamp) public isNewDocument(_hash) {
+    Model.Document memory document = Model.Document({owner: msg.sender, name: _name, hash: _hash, multihash: _multihash, visibility: _visibility, added: _timestamp});
     storeDocument(document);
   }
 
@@ -82,7 +83,7 @@ contract Documenter is Ownable {
 
     authentication.addDocument(_document.owner, _document.hash);
 
-    LogNewDocument(_document.name, _document.hash, _document.multihash, _document.owner, _document.added);
+    LogNewDocument(_document.name, _document.hash, _document.owner, _document.visibility, _document.added);
   }
 
   /**
@@ -99,12 +100,19 @@ contract Documenter is Ownable {
    * @param _hash of the document
    * @return name of the document
    * @return hash of the document
-   * @return multihash of the document
-   * @return address of the document's owner
+   * @return multihash of the document; empty if it's another user's document with visibility set to false
+   * @return visibility of the document
+   * @return owner of the document
    * @return timestamp of the document
    */
-  function getDocumentData(bytes32 _hash) public view isDocumentOwner(_hash, msg.sender) returns (bytes name, bytes32 fileHash, bytes multihash, address owner, uint timestamp) {
+  function getDocumentData(bytes32 _hash) public view returns (bytes name, bytes32 fileHash, bytes multihash, bool visibility, address owner, uint timestamp) {
+    require(documentExists(_hash));
+
     Model.Document memory document = poe[_hash];
-    return (document.name, document.hash, document.multihash, document.owner, document.added);
+    bytes memory mh = "";
+    if (poe[_hash].owner == msg.sender || document.visibility) {
+      mh = document.multihash;
+    }
+    return (document.name, document.hash, mh, document.visibility, document.owner, document.added);
   }
 }

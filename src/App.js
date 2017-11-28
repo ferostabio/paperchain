@@ -133,7 +133,8 @@ export default class App extends Component {
       }).then(multihash => {
         // and then... let's add it to the blockchain
         if (multihash !== undefined) {
-          documenterInstance.notarizeDocument(md5, file.name, multihash, Date.now(), { from: defaultAccount })
+          // TODO: visibility set to true by default, will add a checkbox for it
+          documenterInstance.notarizeDocument(md5, file.name, multihash, true, Date.now(), { from: defaultAccount })
         }
       })
     }
@@ -198,6 +199,7 @@ export default class App extends Component {
     var name
     documenterInstance.getDocumentData(hash, {from: defaultAccount}).then(args => {
       name = web3.toAscii(args[0])
+      // TODO: will have to check visibility status and that multihash ain't empty before continuing
       var multihash = web3.toAscii(args[2])
       // get the document from IPFS
       return Storage.get(multihash)

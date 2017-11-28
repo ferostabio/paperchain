@@ -15,6 +15,7 @@ library Model {
   }
 
   struct Document {
+    bool visibility;
     address owner;
     bytes name;
     bytes multihash;
