@@ -1,5 +1,5 @@
 {
-  "name": "edgarallen",
+  "name": "Paperchain",
   "version": "1.0.0",
   "description": "",
   "main": "truffle-config.js",
@@ -67,14 +67,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ferostar/edgarallen.git"
+    "url": "git+https://github.com/ferostar/paperchain.git"
   },
   "author": "Federico Erostarbe",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/ferostar/edgarallen/issues"
+    "url": "https://github.com/ferostar/paperchain/issues"
   },
-  "homepage": "https://github.com/ferostar/edgarallen#readme",
+  "homepage": "https://github.com/ferostar/paperchain#readme",
   "jest": {
     "collectCoverageFrom": [
       "src/**/*.{js,jsx}"

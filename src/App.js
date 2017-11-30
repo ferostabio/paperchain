@@ -71,7 +71,7 @@ export default class App extends Component {
     })
 
     // setup IPFS
-    Storage.start('ipfs-edgar_allen').then(error => {
+    Storage.start('ipfs-paperchain').then(error => {
       return Storage.id()
     }).then(info => {
       this.setState({
@@ -217,7 +217,7 @@ export default class App extends Component {
   render() {
     return (
       <div>
-      <h1>{ this.state.name === undefined ? "Edgar Allen" : "Hi, " + this.state.name + "!"}</h1>
+      <h1>{ this.state.name === undefined ? "Paperchain" : "Hi, " + this.state.name + "!"}</h1>
       <hr/>
       <AddFileForm name={this.state.name} onFileAdd={this.onFileAdd.bind(this)} />
       <p>Your ID is <strong>{this.state.storage_id}</strong></p>
