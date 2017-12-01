@@ -26,8 +26,8 @@ describe("Storage", () => {
   })
 
   it("should fetch a file from storage after it has been notarized", async () => {
-    var content = await storage.get(multihash)
-    assert.equal(content[0].toString(), fileContents.toString(), "Undefined contents of file")
+    var content = await storage.cat(multihash)
+    assert.equal(content.toString(), fileContents.toString(), "Undefined contents of file")
   })
 })
 */

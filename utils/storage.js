@@ -42,25 +42,18 @@ module.exports.add = (name, buffer) => {
   })
 }
 
-// function that gets a file from IPFS, with it's multihash as param
-module.exports.get = hash => {
+// function that cats a file from IPFS, with it's multihash as param
+module.exports.cat = hash => {
   return new Promise((resolve, reject) => {
-    node.files.get(hash, (err, stream) => {
+    node.files.cat(hash, (err, stream) => {
       if (err) { resolve(undefined) }
-      var buffer = []
       stream.on("data", file => {
-        if (file.content) {
-          file.content.on("data", data => buffer.push(data))
-          file.content.resume()
-        }
-      })
-      stream.resume()
-      stream.on("end", () => {
-        resolve(buffer)
-      })
-    })
-  })
-}
+        resolve(file)
+       })
+     })
+   })
+ }
+
 
 // function that stops the running node
 module.exports.stop = clear => {

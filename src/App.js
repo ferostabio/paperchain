@@ -1,7 +1,7 @@
 // Libraries
 const CryptoJS = require("crypto-js")
 const Storage = require("../utils/storage.js")
-const fs = require("../utils/file.js")
+const fileDownload = require("js-file-download")
 
 import React, { Component } from 'react'
 import Contract from 'truffle-contract'
@@ -34,8 +34,7 @@ export default class App extends Component {
       storage_id: undefined,
       storage_version: undefined,
       storage_protocol: undefined,
-      fileName: undefined,
-      fileContents: undefined
+      selectedDocument: undefined
     }
   }
 
@@ -169,16 +168,24 @@ export default class App extends Component {
     })
   }
 
-  async onRead(doc) {
+  onRead(doc) {
+    this.setState({...this.state, selectedDocument: doc})
+  }
+
+  async onDownload(doc) {
     // check if IPFS setup has completed
     if (this.state.storage_id === undefined) {
       alert("Please wait for IPFS to finish loading")
     }
     const { web3 } = this.state
     const multihash = web3.toAscii(doc.multihash)
-    const raw = await Storage.get(multihash)
-    const contents = await fs.readBlob(raw)
-    this.setState({...this.state, fileName: doc.name, fileContents: contents})
+    const raw = await Storage.cat(multihash)
+    console.log(raw)
+
+
+
+
+    fileDownload(raw, doc.name)
   }
 
   render() {
@@ -193,7 +200,7 @@ export default class App extends Component {
       <hr/>
       <DocumentList documents={this.state.documents} onRead={this.onRead.bind(this)}/>
       <hr/>
-      <DocumentReader name={this.state.fileName} contents={this.state.fileContents}/>
+      <DocumentReader document={this.state.selectedDocument} web3={this.state.web3} onDownload={this.onDownload.bind(this)}/>
       </div>
     )
   }
