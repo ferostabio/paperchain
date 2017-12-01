@@ -14,6 +14,17 @@ module.exports.hashFile = path => {
   })
 }
 
+module.exports.readBlob = file => {
+  return new Promise((resolve, reject) => {
+    var bb = new Blob(file)
+    var f = new FileReader()
+    f.onload = e => {
+      resolve(e.target.result)
+    }
+    f.readAsText(bb)
+  })
+}
+
 module.exports.readSync = path => {
   return fs.readFileSync(path)
 }

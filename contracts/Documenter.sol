@@ -13,24 +13,27 @@ contract Documenter is Ownable {
   // Authentication contract
   Authentication private authentication;
 
+  // Deployment block number
+  uint private blockNumber;
+
   /*
-   * Mapping of hashes -> Document struct
+   * Mapping of hashes -> address struct
    * Hashes should be SHA-256, but they doesn't fit in 32 bytes, you have to use bytes;
    * they're a dynamic array, so if you want to return a list of them to the outside world you end up with
    * https://github.com/willitscale/learning-solidity/blob/master/support/NESTED_ARRAYS_NOT_IMPLEMENTED.MD mayhem.
    * MD5 is good enough to start with.
    */
-  mapping (bytes32 => Model.Document) private poe;
+  mapping (bytes32 => address) private poe;
 
   /**
    * @dev event for the registration of a new document
    * @param name of the new document
    * @param hash of the new document
-   * @param owner address
-   * @param visibility of the document
+   * @param multihash of the new document
    * @param timestamp of the new document
+   * @param owner address
    */
-  event LogNewDocument(bytes name, bytes32 hash, address owner, bool visibility, uint timestamp);
+  event LogNewDocument(string name, bytes32 hash, bytes multihash, uint timestamp, address owner);
 
   /**
    * @dev modifier that checks if a document is new
@@ -48,7 +51,7 @@ contract Documenter is Ownable {
    */
   modifier isDocumentOwner(bytes32 _hash, address _owner) {
     require(documentExists(_hash));
-    require(poe[_hash].owner == owner);
+    require(poe[_hash] == owner);
     _;
   }
 
@@ -58,32 +61,30 @@ contract Documenter is Ownable {
    */
   function Documenter(address _authentication) public {
     authentication = Authentication(_authentication);
+    blockNumber = block.number;
+  }
+
+  /**
+   * @dev helper function that returns the contract deployment's block number
+   * @return block number
+   */
+  function getDeploymentBlockNumber() public view returns (uint block) {
+    return blockNumber;
   }
 
   /**
    * @dev public function that registers a document
-   * @param _hash of the document
    * @param _name of the document
+   * @param _hash of the document
    * @param _multihash of the document's IPFS storage
-   * @param _visibility of the document
    * @param _timestamp of the document
    */
-  function notarizeDocument(bytes32 _hash, bytes _name, bytes _multihash, bool _visibility, uint _timestamp) public isNewDocument(_hash) {
-    Model.Document memory document = Model.Document({owner: msg.sender, name: _name, hash: _hash, multihash: _multihash, visibility: _visibility, added: _timestamp});
-    storeDocument(document);
-  }
+  function notarizeDocument(string _name, bytes32 _hash, bytes _multihash, uint _timestamp) public isNewDocument(_hash) {
+    poe[_hash] = msg.sender;
 
-  /**
-   * @dev private function that registers a document
-   * @notice unnecessary really, will definitely move this into `notarizeDocument`
-   * @param _document struct representing the document
-   */
-  function storeDocument(Model.Document _document) private {
-    poe[_document.hash] = _document;
+    authentication.addDocument(msg.sender, _hash);
 
-    authentication.addDocument(_document.owner, _document.hash);
-
-    LogNewDocument(_document.name, _document.hash, _document.owner, _document.visibility, _document.added);
+    LogNewDocument(_name, _hash, _multihash, _timestamp, msg.sender);
   }
 
   /**
@@ -92,27 +93,6 @@ contract Documenter is Ownable {
    * @return a boolean that indicates if the document exists
    */
   function documentExists(bytes32 _hash) public view returns (bool) {
-    return poe[_hash].name.length != 0;
-  }
-
-  /**
-   * @dev function that returns document data
-   * @param _hash of the document
-   * @return name of the document
-   * @return hash of the document
-   * @return multihash of the document; empty if it's another user's document with visibility set to false
-   * @return visibility of the document
-   * @return owner of the document
-   * @return timestamp of the document
-   */
-  function getDocumentData(bytes32 _hash) public view returns (bytes name, bytes32 fileHash, bytes multihash, bool visibility, address owner, uint timestamp) {
-    require(documentExists(_hash));
-
-    Model.Document memory document = poe[_hash];
-    bytes memory mh = "";
-    if (poe[_hash].owner == msg.sender || document.visibility) {
-      mh = document.multihash;
-    }
-    return (document.name, document.hash, mh, document.visibility, document.owner, document.added);
+    return poe[_hash] != address(0);
   }
 }

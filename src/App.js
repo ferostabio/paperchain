@@ -104,7 +104,7 @@ export default class App extends Component {
     this.loadDocuments()
   }
 
-  onFileAdd(file, visibility) {
+  onFileAdd(file) {
     // check if IPFS setup has completed
     if (this.state.storage_id === undefined) {
       alert("Please wait for IPFS to finish loading")
@@ -118,42 +118,37 @@ export default class App extends Component {
     const { documenterInstance, defaultAccount } = this.state
     // read file and get it's md5 hash
     var reader = new FileReader();
-    reader.onload = event => {
+    reader.onload = async event => {
       if (event === undefined) return
       const binary = event.target.result;
       var md5 = CryptoJS.MD5(binary).toString()
       // check if the document exists. hey, this should use `await` instead of promises
-      documenterInstance.documentExists.call(md5).then(exists => {
-        if (exists) {
-          alert("Document already exists")
-        } else {
-          // if it's a new document, add it to IPFS so we have it's multihash
-          return Storage.add(file.name, Buffer.from(binary))
-        }
-      }).then(multihash => {
-        // and then... let's add it to the blockchain
-        if (multihash !== undefined) {
-          documenterInstance.notarizeDocument(md5, file.name, multihash, visibility, Date.now(), { from: defaultAccount })
-        }
-      })
+      var exists = await documenterInstance.documentExists.call(md5)
+      if (exists) {
+        alert("Document already exists")
+        return
+      }
+      var multihash = await Storage.add(file.name, Buffer.from(binary))
+      if (multihash !== undefined) {
+        documenterInstance.notarizeDocument(file.name, md5, multihash, Date.now(), { from: defaultAccount })
+      }
     }
     reader.readAsBinaryString(file)
   }
 
   async loadDocuments() {
-    // load user's documents array, as bytes32[] and convert it to string[]
-    const { web3, authenticationInstance, defaultAccount } = this.state
-    try {
-      const hashesInBytes32 = await authenticationInstance.getDocuments.call(defaultAccount)
-      const documents = hashesInBytes32.map((hash) => web3.toAscii(hash))
-      console.log(documents)
-      this.setState({
-        ...this.state,
-        documents,
-      })
-    } catch (error) {
-      console.log("Error loading documents: " + error)
-    }
+    // load user's documents off-storage ;) -had to simplify some things in order to get started this way, but it's worth it
+    const { documenterInstance, defaultAccount } = this.state
+    var blockNumber = await documenterInstance.getDeploymentBlockNumber.call()
+    // filter so only documents created by the user are fetched starting when the contract was deployed are fetched (better than zero)
+    var { error, result } = await documenterInstance.LogNewDocument({owner: defaultAccount}, {fromBlock: blockNumber, toBlock: "latest"}).get((error, result) => {
+      if (error) {
+        console.log("Nooooo! " + error)
+      } else {
+        var documents = result.map(x => { return x.args })
+        this.setState({...this.state, documents: documents})
+      }
+    })
   }
 
   async watchNewDocuments() {
@@ -166,52 +161,23 @@ export default class App extends Component {
         console.log("Nooooo! " + error)
       } else {
         console.log("Result: " + JSON.stringify(result.args))
-
-        const hashInBytes32 = result.args.hash
-        const hash = web3.toAscii(hashInBytes32)
-
         // just in case: check if the document hasn't been added already
-        if (!this.state.documents.includes(hash)) {
-          this.setState({...this.state, documents: [...this.state.documents, hash]})
+        if (this.state.documents.filter(document => (document.hash === result.args.hash)).length === 0) {
+          this.setState({...this.state, documents: [...this.state.documents, result.args]})
         }
       }
     })
   }
 
-  readBlob(blob, callback) {
-    // function to convert uint8array that we get from IPFS into something nicer
-    // should probably be somewhere else, not in App.js
-    var bb = new Blob(blob)
-    var f = new FileReader()
-    f.onload = e => {
-      callback(e.target.result)
-    }
-    f.readAsText(bb)
-  }
-
-  onRead(hash) {
+  async onRead(doc) {
     // check if IPFS setup has completed
     if (this.state.storage_id === undefined) {
       alert("Please wait for IPFS to finish loading")
     }
-    const { web3, documenterInstance, defaultAccount } = this.state
-    // get document data from the blockchain
-    var name
-    documenterInstance.getDocumentData(hash, {from: defaultAccount}).then(args => {
-      name = web3.toAscii(args[0])
-      var multihash = web3.toAscii(args[2])
-      if (args[3] === true && multihash !== "") {
-        // get the document from IPFS
-        return Storage.get(multihash)
-      }
-    }).then(raw => {
-      // update the app's state with the file name and contents
-      if (raw !== undefined) {
-        this.readBlob(raw, contents => {
-          this.setState({...this.state, fileName: name, fileContents: contents})
-        })
-      }
-    })
+    const { web3 } = this.state
+    const multihash = web3.toAscii(doc.multihash)
+    const contents = await Storage.get(multihash)
+    this.setState({...this.state, fileName: doc.name, fileContents: contents})
   }
 
   render() {

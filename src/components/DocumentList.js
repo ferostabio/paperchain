@@ -13,7 +13,7 @@ export default class DocumentList extends Component {
       <div>
         <h3>Documents</h3>
         <ul>
-          {this.props.documents.map((document, index) => <li key={index}>{document} <button onClick={this.onReadClicked.bind(this, index)}>Read</button></li>)}
+          {this.props.documents.map((document, index) => <li key={index}>{document.name} <button onClick={this.onReadClicked.bind(this, index)}>Read</button></li>)}
         </ul>
       </div>
     )

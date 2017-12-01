@@ -1,4 +1,5 @@
 const IPFS = require("ipfs")
+const fs = require("./file")
 
 var node = undefined
 var nodePath = undefined
@@ -58,7 +59,9 @@ module.exports.get = hash => {
       })
       stream.resume()
       stream.on("end", () => {
-        resolve(buff)
+        fs.readBlob(buff).then(contents => {
+          resolve(contents)
+        })
       })
     })
   })
