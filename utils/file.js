@@ -1,4 +1,5 @@
 const fs = require("fs")
+const rimraf = require("rimraf")
 const crypto = require("crypto")
 
 // fs related code, used in some placess across the app
@@ -14,6 +15,7 @@ module.exports.hashFile = path => {
   })
 }
 
+// requires FlieAPI and a compatible browser
 module.exports.readBlob = file => {
   return new Promise((resolve, reject) => {
     var bb = new Blob(file)
@@ -27,4 +29,10 @@ module.exports.readBlob = file => {
 
 module.exports.readSync = path => {
   return fs.readFileSync(path)
+}
+
+module.exports.rmrf = folder => {
+  rimraf(folder, () => {
+    
+  })
 }

@@ -1,6 +1,7 @@
 // Libraries
 const CryptoJS = require("crypto-js")
 const Storage = require("../utils/storage.js")
+const fs = require("../utils/file.js")
 
 import React, { Component } from 'react'
 import Contract from 'truffle-contract'
@@ -17,7 +18,6 @@ import promisify from './utils/promisify'
 import AddFileForm from './components/AddFileForm'
 import DocumentList from './components/DocumentList'
 import DocumentReader from './components/DocumentReader'
-
 
 export default class App extends Component {
   constructor(props) {
@@ -176,7 +176,8 @@ export default class App extends Component {
     }
     const { web3 } = this.state
     const multihash = web3.toAscii(doc.multihash)
-    const contents = await Storage.get(multihash)
+    const raw = await Storage.get(multihash)
+    const contents = await fs.readBlob(raw)
     this.setState({...this.state, fileName: doc.name, fileContents: contents})
   }
 

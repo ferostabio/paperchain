@@ -14,9 +14,6 @@ module.exports.start = path => {
       nodePath = path
       resolve(undefined)
     })
-    node.once("error", error => {
-      resolve(error)
-    })
   })
 }
 
@@ -50,49 +47,31 @@ module.exports.get = hash => {
   return new Promise((resolve, reject) => {
     node.files.get(hash, (err, stream) => {
       if (err) { resolve(undefined) }
-      const buff = []
+      var buffer = []
       stream.on("data", file => {
         if (file.content) {
-          file.content.on("data", data => buff.push(data))
+          file.content.on("data", data => buffer.push(data))
           file.content.resume()
         }
       })
       stream.resume()
       stream.on("end", () => {
-        fs.readBlob(buff).then(contents => {
-          resolve(contents)
-        })
-      })
-    })
-  })
-}
-
-// function that cats a file from IPFS, with it's multihash as param
-module.exports.cat = hash => {
-  return new Promise((resolve, reject) => {
-    node.files.cat(hash, (err, stream) => {
-      if (err) { resolve(undefined) }
-      var buff = []
-      stream.on("data", file => {
-        var bb = new Blob(file)
-        var f = new FileReader()
-        f.onload = e => {
-          resolve(e.target.result)
-        }
-        f.readAsText(bb)
+        resolve(buffer)
       })
     })
   })
 }
 
 // function that stops the running node
-module.exports.stop = () => {
+module.exports.stop = clear => {
   return new Promise((resolve, reject) => {
     node.removeAllListeners()
     node.stop(() => {
+      if (clear) {
+        fs.rmrf(nodePath)
+      }
       nodePath = undefined
       resolve()
-      process.exit
     })
   })
 }
