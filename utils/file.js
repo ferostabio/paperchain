@@ -5,7 +5,7 @@ const crypto = require("crypto")
 
 module.exports.hashFile = path => {
   return new Promise((resolve, reject) => {
-    var shasum = crypto.createHash("md5")
+    var shasum = crypto.createHash("sha256")
     var s = fs.ReadStream(path)
     s.on("data", d => { shasum.update(d) })
     s.on("end", () => {

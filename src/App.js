@@ -116,21 +116,21 @@ export default class App extends Component {
       return
     }
     const { documenterInstance, defaultAccount } = this.state
-    // read file and get it's md5 hash
+    // read file and get it's sha256 hash
     var reader = new FileReader();
     reader.onload = async event => {
       if (event === undefined) return
       const binary = event.target.result;
-      var md5 = CryptoJS.MD5(binary).toString()
+      var sha = CryptoJS.SHA256(binary).toString()
       // check if the document exists. hey, this should use `await` instead of promises
-      var exists = await documenterInstance.documentExists.call(md5)
+      var exists = await documenterInstance.documentExists.call(sha)
       if (exists) {
         alert("Document already exists")
         return
       }
       var multihash = await Storage.add(file.name, Buffer.from(binary))
       if (multihash !== undefined) {
-        documenterInstance.notarizeDocument(file.name, md5, multihash, Date.now(), { from: defaultAccount })
+        documenterInstance.notarizeDocument(file.name, sha, multihash, Date.now(), { from: defaultAccount })
       }
     }
     reader.readAsBinaryString(file)
@@ -141,7 +141,7 @@ export default class App extends Component {
     const { documenterInstance, defaultAccount } = this.state
     var blockNumber = await documenterInstance.getDeploymentBlockNumber.call()
     // filter so only documents created by the user are fetched starting when the contract was deployed are fetched (better than zero)
-    var { error, result } = await documenterInstance.LogNewDocument({owner: defaultAccount}, {fromBlock: blockNumber, toBlock: "latest"}).get((error, result) => {
+    documenterInstance.LogNewDocument({owner: defaultAccount}, {fromBlock: blockNumber, toBlock: "latest"}).get((error, result) => {
       if (error) {
         console.log("Nooooo! " + error)
       } else {

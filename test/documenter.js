@@ -85,16 +85,6 @@ contract("Documenter", accounts => {
     assert.equal(data.owner, defaultAccount, "Document owner not stored correctly")
   })
 
-  it("should add info to the user after notarizing a document", async () => {
-    var hashes = await authentication.getDocuments.call(defaultAccount)
-    assert.equal(web3.toAscii(hashes[0]), fileHash, "File hash different")
-  })
-
-  it("a user should get another user's documents", async () => {
-    var hashes = await authentication.getDocuments.call(accounts[0], {from: accounts[1]})
-    assert.equal(hashes.length, 1, "User wasn't able to get another user's documents")
-  })
-
   it("a user shouldn't be able to add an existing document", async () => {
     try {
       await documenter.notarizeDocument(testFileName, fileHash, testFileStorageHash, Date.now(), defaultTx)

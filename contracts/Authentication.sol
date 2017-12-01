@@ -1,6 +1,5 @@
 pragma solidity ^0.4.17;
 
-import "./Model.sol";
 import "../node_modules/zeppelin-solidity/contracts/ownership/Ownable.sol";
 
 /**
@@ -10,10 +9,20 @@ import "../node_modules/zeppelin-solidity/contracts/ownership/Ownable.sol";
 contract Authentication is Ownable {
 
   /*
+   * User struct; there's a refactor happening and i'm not entirely sure
+   * about some things such as the documentList bytes[]. We'll see.
+   */
+  struct User {
+    bytes name;
+    bytes[] documentList;
+    uint numberOfDocuments;
+  }
+
+  /*
    * Mapping of address -> User struct
    * Next to address array and number of users uint, to be able to iterate and return all
    */
-  mapping (address => Model.User) private users;
+  mapping (address => User) private users;
   address[] private userList;
   uint private numberOfUsers;
 
@@ -77,18 +86,18 @@ contract Authentication is Ownable {
    * @param _owner address
    * @param _hash of the document
    */
-  function addDocument(address _owner, bytes32 _hash) public isExistingUser(_owner) {
-    Model.User storage user = users[_owner];
+  function addDocument(address _owner, bytes _hash) public isExistingUser(_owner) {
+    User storage user = users[_owner];
     user.documentList.push(_hash);
     user.numberOfDocuments++;
   }
 
   /**
-   * @dev function that returns a user's documents
-   * @param _source address
-   * @return a bytes32 array containing the user's registered hashes
+   * @dev helper function that returns a user's number of documents
+   * @param _owner address
    */
-  function getDocuments(address _source) public view isExistingUser(_source) returns (bytes32[]) {
-    return users[_source].documentList;
+  function getNumberOfDocuments(address _owner) public view isExistingUser(_owner) returns (uint) {
+    User storage user = users[_owner];
+    return user.numberOfDocuments;
   }
 }

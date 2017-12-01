@@ -10,7 +10,7 @@ library Model {
 
   struct User {
     bytes name;
-    bytes32[] documentList;
+    bytes[] documentList;
     uint numberOfDocuments;
   }
 

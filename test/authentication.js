@@ -49,9 +49,9 @@ contract("Authentication", accounts => {
   })
 
   it("should add and retrieve document data", async () => {
-    var hash = "some_hash"
-    await authentication.addDocument(defaultAccount, hash)
-    var documents = await authentication.getDocuments.call(defaultAccount)
-    assert.equal(web3.toUtf8(documents[0]), hash, "The user was not signed up")
+    var first = await authentication.getNumberOfDocuments.call(defaultAccount)
+    await authentication.addDocument(defaultAccount, "hash")
+    var second = await authentication.getNumberOfDocuments.call(defaultAccount)
+    assert.equal(++first, second, "Document wasn't added as it should")
   })
 })
