@@ -6,25 +6,26 @@ const testFileName = "masque.txt"
 const testFilePath = "./assets/" + testFileName
 const defaultErrorMessage = "Call shouldn't succeed"
 const testFileStorageHash = "QmPTHYApwdcyMvHHvwCqvu7sZwjw7kuMGTMEQFzdKKA1my"
+const numberOfCategories = 2
 
-function documentEvent(documenter, account, currentBlock, testFileName, fileHash) {
+function documentEvent(documenter, account, currentBlock) {
   return documenter.LogNewDocument({owner: account}, {fromBlock: currentBlock, toBlock: "latest"})
 }
 
-function watchDocuments(documenter, account, currentBlock, testFileName, fileHash) {
+function watchDocuments(documenter, account, currentBlock, name, category, hash) {
   return new Promise((resolve, reject) => {
-    var event = documentEvent(documenter, account, currentBlock, testFileName, fileHash)
+    var event = documentEvent(documenter, account, currentBlock)
     event.watch((error, result) => {
       resolve(error)
       event.stopWatching()
     })
-    documenter.notarizeDocument(testFileName, fileHash, testFileStorageHash, Date.now(), { from: account})
+    documenter.notarizeDocument(name, category, hash, testFileStorageHash, Date.now(), { from: account})
   })
 }
 
-function getDocuments(documenter, account, currentBlock, fileHash, testFileName) {
+function getDocuments(documenter, account, currentBlock) {
   return new Promise((resolve, reject) => {
-    var event = documentEvent(documenter, account, currentBlock, testFileName, fileHash)
+    var event = documentEvent(documenter, account, currentBlock)
     event.get((error, result) => {
       resolve(result)
       event.stopWatching()
@@ -37,7 +38,7 @@ contract("Documenter", accounts => {
 
   const defaultAccount = accounts[0]
   const defaultTx = { from: defaultAccount }
-  const defaultVisibility = false
+  const defaultCategory = 1
   const now = Date.now()
   var notarize = false // Variable set to false each time i need beforeEach not to notarize a document
 
@@ -46,7 +47,7 @@ contract("Documenter", accounts => {
     await authentication.signup('user', defaultTx)
     documenter = await Documenter.new(authentication.address)
     if (notarize) {
-      await documenter.notarizeDocument(testFileName, fileHash, testFileStorageHash, now, defaultTx)
+      await documenter.notarizeDocument(testFileName, defaultCategory, fileHash, testFileStorageHash, now, defaultTx)
     }
   })
 
@@ -55,7 +56,7 @@ contract("Documenter", accounts => {
     var exists = await documenter.documentExists.call(fileHash)
     assert.isNotOk(exists, "Hash already exists")
 
-    await documenter.notarizeDocument(testFileName, fileHash, testFileStorageHash, now, defaultTx)
+    await documenter.notarizeDocument(testFileName, defaultCategory, fileHash, testFileStorageHash, now, defaultTx)
     exists = await documenter.documentExists.call(fileHash)
     assert.isOk(exists, "Didn't add hash")
     notarize = true
@@ -63,10 +64,11 @@ contract("Documenter", accounts => {
 
   it("should properly store document data", async () => {
     var block = await documenter.getDeploymentBlockNumber.call()
-    var result = await getDocuments(documenter, defaultAccount, block.toNumber(), testFileName, fileHash)
+    var result = await getDocuments(documenter, defaultAccount, block.toNumber())
     var data = result[0].args
 
     assert.equal(data.name, testFileName, "Wrong file name")
+    assert.equal(data.category.toNumber(), 1, "Wrong file category")
     assert.equal(web3.toAscii(data.hash), fileHash, "Document hash different")
     assert.equal(web3.toAscii(data.multihash), testFileStorageHash, "Storage hash different")
     assert.equal(data.timestamp.toNumber(), now, "Document with wrong date")
@@ -75,10 +77,11 @@ contract("Documenter", accounts => {
 
   it("a user should get another user's document", async () => {
     var block = await documenter.getDeploymentBlockNumber.call()
-    var result = await getDocuments(documenter, accounts[1], block.toNumber(), testFileName, fileHash)
+    var result = await getDocuments(documenter, accounts[1], block.toNumber())
     var data = result[0].args
 
     assert.equal(data.name, testFileName, "Wrong file name")
+    assert.equal(data.category.toNumber(), 1, "Wrong file category")
     assert.equal(web3.toAscii(data.hash), fileHash, "Document hash different")
     assert.equal(web3.toAscii(data.multihash), testFileStorageHash, "Storage hash different")
     assert.equal(data.timestamp.toNumber(), now, "Document with wrong date")
@@ -87,7 +90,7 @@ contract("Documenter", accounts => {
 
   it("a user shouldn't be able to add an existing document", async () => {
     try {
-      await documenter.notarizeDocument(testFileName, fileHash, testFileStorageHash, Date.now(), defaultTx)
+      await documenter.notarizeDocument(testFileName, defaultCategory, fileHash, testFileStorageHash, Date.now(), defaultTx)
       assert(false, "User added an existing document")
     } catch (error) {
       assert.match(error.message, /invalid opcode/, defaultErrorMessage)
@@ -95,8 +98,18 @@ contract("Documenter", accounts => {
     notarize = false
   })
 
+  it("a user shouldn't be able to notarize a document with an invalid category", async () => {
+    try {
+      await documenter.notarizeDocument(testFileName, numberOfCategories, fileHash, testFileStorageHash, Date.now(), defaultTx)
+      assert(false, "User added a document with invalid category")
+    } catch (error) {
+      assert.match(error.message, /invalid opcode/, defaultErrorMessage)
+    }
+    notarize = false
+  })
+
   it("should fire an event when a new file is added", async () => {
-    var error = await watchDocuments(documenter, defaultAccount, web3.eth.blockNumber, testFileName, fileHash)
+    var error = await watchDocuments(documenter, defaultAccount, web3.eth.blockNumber, testFileName, defaultCategory, fileHash)
     assert.equal(error, null, "Watcher returned error")
   })
 })

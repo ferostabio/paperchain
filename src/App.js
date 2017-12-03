@@ -25,6 +25,7 @@ export default class App extends Component {
 
     // Set default state
     this.state = {
+      categories: ["Quantum Physichs", "Lepufology"], // Taken from Documenter.sol
       documents: [],
       defaultAccount: undefined,
       authenticationInstance: undefined,
@@ -103,7 +104,7 @@ export default class App extends Component {
     this.loadDocuments()
   }
 
-  onFileAdd(file) {
+  onFileAdd(file, category) {
     // check if IPFS setup has completed
     if (this.state.storage_id === undefined) {
       alert("Please wait for IPFS to finish loading")
@@ -115,6 +116,7 @@ export default class App extends Component {
       return
     }
     const { documenterInstance, defaultAccount } = this.state
+    const index = this.state.categories.indexOf(category)
     // read file and get it's sha256 hash
     var reader = new FileReader();
     reader.onload = async event => {
@@ -129,7 +131,7 @@ export default class App extends Component {
       }
       var multihash = await Storage.add(file.name, Buffer.from(binary))
       if (multihash !== undefined) {
-        documenterInstance.notarizeDocument(file.name, sha, multihash, Date.now(), { from: defaultAccount })
+        documenterInstance.notarizeDocument(file.name, index, sha, multihash, Date.now(), { from: defaultAccount })
       }
     }
     reader.readAsBinaryString(file)
@@ -193,14 +195,14 @@ export default class App extends Component {
       <div>
       <h1>{ this.state.name === undefined ? "Paperchain" : "Hi, " + this.state.name + "!"}</h1>
       <hr/>
-      <AddFileForm name={this.state.name} onFileAdd={this.onFileAdd.bind(this)} />
+      <AddFileForm name={this.state.name} options={this.state.categories} onFileAdd={this.onFileAdd.bind(this)} />
       <p>Your ID is <strong>{this.state.storage_id}</strong></p>
       <p>Your IPFS version is <strong>{this.state.storage_version}</strong></p>
       <p>Your IPFS protocol version is <strong>{this.state.storage_protocol}</strong></p>
       <hr/>
       <DocumentList documents={this.state.documents} onRead={this.onRead.bind(this)}/>
       <hr/>
-      <DocumentReader document={this.state.selectedDocument} web3={this.state.web3} onDownload={this.onDownload.bind(this)}/>
+      <DocumentReader doc={this.state.selectedDocument} categories={this.state.categories} web3={this.state.web3} onDownload={this.onDownload.bind(this)}/>
       </div>
     )
   }

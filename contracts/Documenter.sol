@@ -10,6 +10,12 @@ import "../node_modules/zeppelin-solidity/contracts/ownership/Ownable.sol";
  */
 contract Documenter is Ownable {
 
+  /*
+   * Each document has a category. Well, eventually will have more than one.
+   * Current values are just a stub
+   */
+  enum Category { QUANTUM_PHYSICS, LEPUFOLOGY}
+
   // Authentication contract
   Authentication private authentication;
 
@@ -22,12 +28,13 @@ contract Documenter is Ownable {
   /**
    * @dev event for the registration of a new document
    * @param name of the new document
+   * @param category of the new document
    * @param hash of the new document
    * @param multihash of the new document
    * @param timestamp of the new document
    * @param owner address
    */
-  event LogNewDocument(string name, bytes hash, bytes multihash, uint timestamp, address owner);
+  event LogNewDocument(string name, uint category, bytes hash, bytes multihash, uint timestamp, address owner);
 
   /**
    * @dev modifier that checks if a document is new
@@ -35,6 +42,15 @@ contract Documenter is Ownable {
    */
   modifier isNewDocument(bytes _hash) {
     require(!documentExists(_hash));
+    _;
+  }
+
+  /**
+   * @dev modifier that checks if a category is valid
+   * @param _category of the document
+   */
+  modifier isCategoryValid(uint _category) {
+    require(uint(Category.LEPUFOLOGY) >= _category);
     _;
   }
 
@@ -69,16 +85,17 @@ contract Documenter is Ownable {
   /**
    * @dev public function that registers a document
    * @param _name of the document
+   * @param _category of the document
    * @param _hash of the document
    * @param _multihash of the document's IPFS storage
    * @param _timestamp of the document
    */
-  function notarizeDocument(string _name, bytes _hash, bytes _multihash, uint _timestamp) public isNewDocument(_hash) {
+  function notarizeDocument(string _name, uint _category, bytes _hash, bytes _multihash, uint _timestamp) public isNewDocument(_hash) isCategoryValid(_category) {
     poe[_hash] = msg.sender;
 
     authentication.addDocument(msg.sender, _hash);
 
-    LogNewDocument(_name, _hash, _multihash, _timestamp, msg.sender);
+    LogNewDocument(_name, _category, _hash, _multihash, _timestamp, msg.sender);
   }
 
   /**
