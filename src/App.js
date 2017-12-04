@@ -18,14 +18,18 @@ import promisify from './utils/promisify'
 import AddFileForm from './components/AddFileForm'
 import DocumentList from './components/DocumentList'
 import DocumentReader from './components/DocumentReader'
+import CategoryList from './components/CategoryList'
 
+// Currently... everything is here. And i do mean it. Everything. Will eventually grow into a much nicer codebase, of course.
 export default class App extends Component {
   constructor(props) {
     super(props)
 
     // Set default state
     this.state = {
-      categories: ["Quantum Physichs", "Lepufology"], // Taken from Documenter.sol
+      categories: ["Quantum Physics", "Lepufology"], // Taken from Documenter.sol
+      selectedCategory: 0, // Both this and categoryDocuments are just a sample of data analytics
+      caterogyDocuments: [],
       documents: [],
       defaultAccount: undefined,
       authenticationInstance: undefined,
@@ -93,6 +97,9 @@ export default class App extends Component {
       await authenticationInstance.signup(name, {from: defaultAccount})
       this.didLogin(name)
     }
+
+    // No need to have a logged in user to get documents by category
+    this.loadCategoryDocuments(0)
   }
 
   didLogin(name) {
@@ -117,6 +124,7 @@ export default class App extends Component {
     }
     const { documenterInstance, defaultAccount } = this.state
     const index = this.state.categories.indexOf(category)
+
     // read file and get it's sha256 hash
     var reader = new FileReader();
     reader.onload = async event => {
@@ -138,6 +146,7 @@ export default class App extends Component {
   }
 
   async loadDocuments() {
+    console.log("about to load")
     // load user's documents off-storage ;) -had to simplify some things in order to get started this way, but it's worth it
     const { documenterInstance, defaultAccount } = this.state
     var blockNumber = await documenterInstance.getDeploymentBlockNumber.call()
@@ -146,6 +155,7 @@ export default class App extends Component {
       if (error) {
         console.log("Nooooo! " + error)
       } else {
+        console.log(result)
         var documents = result.map(x => { return x.args })
         this.setState({...this.state, documents: documents})
       }
@@ -182,12 +192,31 @@ export default class App extends Component {
     const { web3 } = this.state
     const multihash = web3.toAscii(doc.multihash)
     const raw = await Storage.cat(multihash)
-    console.log(raw)
-
-
-
 
     fileDownload(raw, doc.name)
+  }
+
+  // Category related
+
+  async loadCategoryDocuments(category) {
+    // loadDocuments() variation
+    const { documenterInstance } = this.state
+    var blockNumber = await documenterInstance.getDeploymentBlockNumber.call()
+    documenterInstance.LogNewDocument({category: category}, {fromBlock: blockNumber, toBlock: "latest"}).get((error, result) => {
+      if (error) {
+        console.log("Nooooo! " + error)
+      } else {
+        console.log(result)
+        var documents = result.map(x => { return x.args })
+        console.log(documents)
+        this.setState({...this.state, categoryDocuments: documents})
+      }
+    })
+  }
+
+  onCategoryChange(category) {
+    this.setState({...this.state, selectedCategory: category})
+    this.loadCategoryDocuments(category)
   }
 
   render() {
@@ -203,6 +232,9 @@ export default class App extends Component {
       <DocumentList documents={this.state.documents} onRead={this.onRead.bind(this)}/>
       <hr/>
       <DocumentReader doc={this.state.selectedDocument} categories={this.state.categories} web3={this.state.web3} onDownload={this.onDownload.bind(this)}/>
+      <hr/>
+      <hr/>
+      <CategoryList options={this.state.categories} documents={this.state.categoryDocuments} onCategoryChange={this.onCategoryChange.bind(this)} />
       </div>
     )
   }

@@ -27,14 +27,16 @@ contract Documenter is Ownable {
 
   /**
    * @dev event for the registration of a new document
+   * @notice name param should be indexed, but dynamic properties cannot be decoded by web3 if marked this way
+   * @notice https://ethereum.stackexchange.com/questions/6840/indexed-event-with-string-not-getting-logged/7170#7170
    * @param name of the new document
-   * @param category of the new document
+   * @param category of the new document (indexed)
    * @param hash of the new document
    * @param multihash of the new document
    * @param timestamp of the new document
-   * @param owner address
+   * @param owner address (indexed)
    */
-  event LogNewDocument(string name, uint category, bytes hash, bytes multihash, uint timestamp, address owner);
+  event LogNewDocument(string name, uint indexed category, bytes hash, bytes multihash, uint timestamp, address indexed owner);
 
   /**
    * @dev modifier that checks if a document is new

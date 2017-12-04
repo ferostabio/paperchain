@@ -4,6 +4,13 @@ var FileInput = require('react-file-input')
 
 export default class AddFileForm extends Component {
 
+  constructor(props) {
+    super(props)
+    this.state = {
+      selected: "Quantum Physics",
+    }
+  }
+
   onFileAdd(event) {
     const selected = this.state.selected
     const file = event.target.files[0]
@@ -13,11 +20,11 @@ export default class AddFileForm extends Component {
 
   render() {
     const createItem = item =>
-      <option
-        key={item}
-        value={item} >
-        {item}
-      </option>;
+    <option
+    key={item}
+    value={item} >
+    {item}
+    </option>
     return (
       <div>
 
@@ -28,11 +35,9 @@ export default class AddFileForm extends Component {
       onChange={this.onFileAdd.bind(this)} />
 
       <select
-          onChange={event => this.setState({ selected: event.target.value })}>
-          
-          {this.props.options.map(createItem)}
-        </select>
-
+      onChange={event => this.setState({ selected: event.target.value })}>
+      {this.props.options.map(createItem)}
+      </select>
       </div>
     )
   }
