@@ -14,7 +14,7 @@ contract Authentication is Ownable {
    */
   struct User {
     bytes name;
-    bytes[] documentList;
+    bytes32[] documentList;
     uint numberOfDocuments;
   }
 
@@ -86,7 +86,7 @@ contract Authentication is Ownable {
    * @param _owner address
    * @param _hash of the document
    */
-  function addDocument(address _owner, bytes _hash) public isExistingUser(_owner) {
+  function addDocument(address _owner, bytes32 _hash) public isExistingUser(_owner) {
     User storage user = users[_owner];
     user.documentList.push(_hash);
     user.numberOfDocuments++;

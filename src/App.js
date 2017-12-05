@@ -111,7 +111,7 @@ export default class App extends Component {
     this.loadDocuments()
   }
 
-  onFileAdd(file, category) {
+  onFileAdd(file, category, quotes) {
     // check if IPFS setup has completed
     if (this.state.storage_id === undefined) {
       alert("Please wait for IPFS to finish loading")
@@ -125,21 +125,21 @@ export default class App extends Component {
     const { documenterInstance, defaultAccount } = this.state
     const index = this.state.categories.indexOf(category)
 
-    // read file and get it's sha256 hash
+    // read file and get it's hash
     var reader = new FileReader();
     reader.onload = async event => {
       if (event === undefined) return
       const binary = event.target.result;
-      var sha = CryptoJS.SHA256(binary).toString()
+      var hash = CryptoJS.MD5(binary).toString()
       // check if the document exists. hey, this should use `await` instead of promises
-      var exists = await documenterInstance.documentExists.call(sha)
+      var exists = await documenterInstance.documentExists.call(hash)
       if (exists) {
         alert("Document already exists")
         return
       }
       var multihash = await Storage.add(file.name, Buffer.from(binary))
       if (multihash !== undefined) {
-        documenterInstance.notarizeDocument(file.name, index, sha, multihash, Date.now(), { from: defaultAccount })
+        documenterInstance.notarizeDocument(file.name, index, quotes, hash, multihash, Date.now(), { from: defaultAccount })
       }
     }
     reader.readAsBinaryString(file)

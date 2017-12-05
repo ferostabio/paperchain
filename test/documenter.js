@@ -19,7 +19,7 @@ function watchDocuments(documenter, account, currentBlock, name, category, hash)
       resolve(error)
       event.stopWatching()
     })
-    documenter.notarizeDocument(name, category, hash, testFileStorageHash, Date.now(), { from: account})
+    documenter.notarizeDocument(name, category, [], hash, testFileStorageHash, Date.now(), { from: account})
   })
 }
 
@@ -47,7 +47,7 @@ contract("Documenter", accounts => {
     await authentication.signup('user', defaultTx)
     documenter = await Documenter.new(authentication.address)
     if (notarize) {
-      await documenter.notarizeDocument(testFileName, defaultCategory, fileHash, testFileStorageHash, now, defaultTx)
+      await documenter.notarizeDocument(testFileName, defaultCategory, [], fileHash, testFileStorageHash, now, defaultTx)
     }
   })
 
@@ -56,7 +56,7 @@ contract("Documenter", accounts => {
     var exists = await documenter.documentExists.call(fileHash)
     assert.isNotOk(exists, "Hash already exists")
 
-    await documenter.notarizeDocument(testFileName, defaultCategory, fileHash, testFileStorageHash, now, defaultTx)
+    await documenter.notarizeDocument(testFileName, defaultCategory, [], fileHash, testFileStorageHash, now, defaultTx)
     exists = await documenter.documentExists.call(fileHash)
     assert.isOk(exists, "Didn't add hash")
     notarize = true
@@ -75,22 +75,9 @@ contract("Documenter", accounts => {
     assert.equal(data.owner, defaultAccount, "Document owner not stored correctly")
   })
 
-  it("a user should get another user's document", async () => {
-    var block = await documenter.getDeploymentBlockNumber.call()
-    var result = await getDocuments(documenter, accounts[1], block.toNumber())
-    var data = result[0].args
-
-    assert.equal(data.name, testFileName, "Wrong file name")
-    assert.equal(data.category.toNumber(), 1, "Wrong file category")
-    assert.equal(web3.toAscii(data.hash), fileHash, "Document hash different")
-    assert.equal(web3.toAscii(data.multihash), testFileStorageHash, "Storage hash different")
-    assert.equal(data.timestamp.toNumber(), now, "Document with wrong date")
-    assert.equal(data.owner, defaultAccount, "Document owner not stored correctly")
-  })
-
   it("a user shouldn't be able to add an existing document", async () => {
     try {
-      await documenter.notarizeDocument(testFileName, defaultCategory, fileHash, testFileStorageHash, Date.now(), defaultTx)
+      await documenter.notarizeDocument(testFileName, defaultCategory, [], fileHash, testFileStorageHash, Date.now(), defaultTx)
       assert(false, "User added an existing document")
     } catch (error) {
       assert.match(error.message, /invalid opcode/, defaultErrorMessage)
@@ -100,8 +87,18 @@ contract("Documenter", accounts => {
 
   it("a user shouldn't be able to notarize a document with an invalid category", async () => {
     try {
-      await documenter.notarizeDocument(testFileName, numberOfCategories, fileHash, testFileStorageHash, Date.now(), defaultTx)
+      await documenter.notarizeDocument(testFileName, numberOfCategories, [], fileHash, testFileStorageHash, Date.now(), defaultTx)
       assert(false, "User added a document with invalid category")
+    } catch (error) {
+      assert.match(error.message, /invalid opcode/, defaultErrorMessage)
+    }
+    notarize = false
+  })
+
+  it("shouldn't notarize a document with a not existing quote", async () => {
+    try {
+      await documenter.notarizeDocument(testFileName, defaultCategory, ["meesa_not_exists"], fileHash, testFileStorageHash, Date.now(), defaultTx)
+      assert(false, "User added a document with not existing quote")
     } catch (error) {
       assert.match(error.message, /invalid opcode/, defaultErrorMessage)
     }

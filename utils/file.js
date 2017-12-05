@@ -6,7 +6,7 @@ const crypto = require("crypto")
 
 module.exports.hashFile = path => {
   return new Promise((resolve, reject) => {
-    var shasum = crypto.createHash("sha256")
+    var shasum = crypto.createHash("md5")
     var s = fs.ReadStream(path)
     s.on("data", d => { shasum.update(d) })
     s.on("end", () => {
@@ -33,6 +33,6 @@ module.exports.readSync = path => {
 
 module.exports.rmrf = folder => {
   rimraf(folder, () => {
-    
+
   })
 }
