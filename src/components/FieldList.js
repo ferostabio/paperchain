@@ -1,11 +1,11 @@
 import React, { Component } from 'react'
 
-export default class CategoryList extends Component {
+export default class FieldList extends Component {
 
-  onCategoryChange(event) {
+  onFieldChange(event) {
     const index = this.props.options.indexOf(event.target.value)
-    const { onCategoryChange } = this.props
-    onCategoryChange(index)
+    const { onFieldChange } = this.props
+    onFieldChange(index)
   }
 
   render() {
@@ -20,7 +20,7 @@ export default class CategoryList extends Component {
       return (
         <div>
         <select
-        onChange={this.onCategoryChange.bind(this)}>
+        onChange={this.onFieldChange.bind(this)}>
         {this.props.options.map(createItem)}
         </select>
         <ul>

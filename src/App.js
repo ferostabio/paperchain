@@ -6,7 +6,6 @@ import React, { Component } from 'react'
 import Contract from 'truffle-contract'
 
 import Storage from '../utils/storage'
-
 const storage = new Storage()
 
 // Contract Abis
@@ -18,10 +17,11 @@ import getWeb3 from './utils/getWeb3'
 import promisify from './utils/promisify'
 
 // Components
+import AuthForm from './components/AuthForm'
 import AddFileForm from './components/AddFileForm'
 import DocumentList from './components/DocumentList'
 import DocumentReader from './components/DocumentReader'
-import CategoryList from './components/CategoryList'
+import FieldList from './components/FieldList'
 
 // Currently... everything is here. And i do mean it. Everything. Will eventually grow into a much nicer codebase, of course.
 export default class App extends Component {
@@ -30,18 +30,16 @@ export default class App extends Component {
 
     // Set default state
     this.state = {
-      categories: ["Quantum Physics", "Lepufology"], // Taken from Documenter.sol
-      selectedCategory: 0, // Both this and categoryDocuments are just a sample of data analytics
-      caterogyDocuments: [],
+      fields: ["Quantum Physics", "Lepufology"], // Taken from Documenter.sol
+      selectedField: 0, // Both this and fieldDocuments are just a sample of data analytics
+      fieldDocuments: [],
       documents: [],
       defaultAccount: undefined,
       authenticationInstance: undefined,
       documenterInstance: undefined,
       web3: undefined,
-      name: undefined,
-      storage_id: undefined,
-      storage_version: undefined,
-      storage_protocol: undefined,
+      user: undefined,
+      storage_started: false,
       selectedDocument: undefined,
       selectedDocumentsFromQuotes: [],
       selectedDocumentsToQuotes: []
@@ -83,55 +81,58 @@ export default class App extends Component {
     storage.start('ipfs-paperchain').then(error => {
       if (error) {
         console.log(error)
+      } else {
+        this.setState({
+          storage_started: true
+        })
       }
-      return storage.info()
-    }).then(info => {
-      this.setState({
-        storage_id: info[0],
-        storage_version: info[1],
-        storage_protocol: info[2]
-      })
     })
 
     // get logged in user, otherwise request user (un)friendly signup
-    let name
+    let result
     try {
-      name = await authenticationInstance.login.call({from: defaultAccount})
-      this.didLogin(web3.toUtf8(name))
+      result = await authenticationInstance.login.call({from: defaultAccount})
+      console.log(result)
+      const user = {"name": web3.toUtf8(result[0]), "field": result[1].toNumber()}
+      this.didLogin(user)
     } catch (error) {
-      do {
-        name = prompt("Please enter your user name")
-      } while (name === null || name === "" )
-      await authenticationInstance.signup(name, {from: defaultAccount})
-      this.didLogin(name)
+      console.log(error)
     }
 
-    // No need to have a logged in user to get documents by category
-    this.loadCategoryDocuments(0)
+    // No need to have a logged in user to get documents by field
+    this.loadFieldDocuments(0)
   }
 
-  didLogin(name) {
-    // store user name in state and load documents
+  didLogin(user) {
+    // store user in state and load documents
     this.setState({
       ...this.state,
-      name: name
+      user: user
     })
     this.loadDocuments()
   }
 
-  onFileAdd(file, category, quotes) {
+  async onSignupClicked(name, field) {
+    const index = this.state.fields.indexOf(field)
+    const { authenticationInstance, defaultAccount} = this.state
+    await authenticationInstance.signup(name, index, {from: defaultAccount})
+    const user = {"name": name, "field": index}
+    this.didLogin(user)
+  }
+
+  onFileAdd(file, quotes) {
     // check if IPFS setup has completed
-    if (this.state.storage_id === undefined) {
+    if (this.state.storage_started === false) {
       alert("Please wait for IPFS to finish loading")
       return
     }
     // check if we have a logged in user
-    if (this.state.name === undefined) {
+    if (this.state.user === undefined) {
       alert("Please sign up before adding the file (hit reload)")
       return
     }
     const { documenterInstance, defaultAccount } = this.state
-    const index = this.state.categories.indexOf(category)
+    const index = this.state.user.field
 
     // read file and get it's hash
     const reader = new FileReader();
@@ -145,9 +146,6 @@ export default class App extends Component {
         alert("Document already exists")
         return
       }
-
-
-
       const multihash = await storage.add(file.name, Buffer.from(binary))
       if (multihash !== undefined) {
         documenterInstance.notarizeDocument(file.name, index, quotes, hash, multihash, Date.now(), { from: defaultAccount })
@@ -202,7 +200,7 @@ export default class App extends Component {
 
   async onDownload(doc) {
     // check if IPFS setup has completed
-    if (this.state.storage_id === undefined) {
+    if (this.state.storage_started === false) {
       alert("Please wait for IPFS to finish loading")
     }
     const { web3 } = this.state
@@ -237,13 +235,13 @@ export default class App extends Component {
       if (error) {
         console.log("Nooooo! " + error)
       } else {
-        var args = result.map(x => { return x.args })
-        var to = from["_from"] !== undefined
-        var actions = args.map(quote => {
+        const args = result.map(x => { return x.args })
+        const to = from["from"] !== undefined
+        const actions = args.map(quote => {
           if (to) {
-            return this.loadDoc(block, quote._to)
+            return this.loadDoc(block, quote.to)
           } else {
-            return this.loadDoc(block, quote._from)
+            return this.loadDoc(block, quote.from)
           }
         })
         Promise.all(actions).then(documents => {
@@ -258,58 +256,64 @@ export default class App extends Component {
   async getDocumentQuotes(doc) {
     const { documenterInstance } = this.state
     const blockNumber = await documenterInstance.getDeploymentBlockNumber.call()
-    this.getQuotes(blockNumber, {_from: doc.hash}, documents => {
+    this.getQuotes(blockNumber, {from: doc.hash}, documents => {
       this.setState({...this.state,
         selectedDocumentsFromQuotes: documents,
       })
     })
-    this.getQuotes(blockNumber, {_to: doc.hash}, documents => {
+    this.getQuotes(blockNumber, {to: doc.hash}, documents => {
       this.setState({...this.state,
         selectedDocumentsToQuotes: documents,
       })
     })
   }
 
-  // Category related
+  // Field related
 
-  async loadCategoryDocuments(category) {
-    // loadDocuments() variation, a watchCategoryDocuments method will need to be added as well
+  async loadFieldDocuments(field) {
+    // loadDocuments() variation, a watchFieldDocuments method will need to be added as well
     const { documenterInstance } = this.state
     const blockNumber = await documenterInstance.getDeploymentBlockNumber.call()
-    documenterInstance.LogNewDocument({category: category}, {fromBlock: blockNumber, toBlock: "latest"}).get((error, result) => {
+    documenterInstance.LogNewDocument({field: field}, {fromBlock: blockNumber, toBlock: "latest"}).get((error, result) => {
       if (error) {
         console.log("Nooooo! " + error)
       } else {
         console.log(result)
         const documents = result.map(x => { return x.args })
         console.log(documents)
-        this.setState({...this.state, categoryDocuments: documents})
+        this.setState({...this.state, fieldDocuments: documents})
       }
     })
   }
 
-  onCategoryChange(category) {
-    this.setState({...this.state, selectedCategory: category})
-    this.loadCategoryDocuments(category)
+  onFieldChange(field) {
+    this.setState({...this.state, selectedField: field})
+    this.loadFieldDocuments(field)
   }
 
   render() {
-    return (
-      <div>
-      <h1>{ this.state.name === undefined ? "Paperchain" : "Hi, " + this.state.name + "!"}</h1>
-      <hr/>
-      <AddFileForm name={this.state.name} options={this.state.categories} onFileAdd={this.onFileAdd.bind(this)} />
-      <p>Your ID is <strong>{this.state.storage_id}</strong></p>
-      <p>Your IPFS version is <strong>{this.state.storage_version}</strong></p>
-      <p>Your IPFS protocol version is <strong>{this.state.storage_protocol}</strong></p>
-      <hr/>
-      <DocumentList documents={this.state.documents} onRead={this.onRead.bind(this)}/>
-      <hr/>
-      <DocumentReader doc={this.state.selectedDocument} from={this.state.selectedDocumentsFromQuotes} to={this.state.selectedDocumentsToQuotes} categories={this.state.categories} web3={this.state.web3} onDownload={this.onDownload.bind(this)}/>
-      <hr/>
-      <hr/>
-      <CategoryList options={this.state.categories} documents={this.state.categoryDocuments} onCategoryChange={this.onCategoryChange.bind(this)} />
-      </div>
-    )
+    if (this.state.user === undefined) {
+      return (
+        <div>
+        <AuthForm options={this.state.fields} onSignupClicked={this.onSignupClicked.bind(this)}/>
+        </div>
+      )
+    } else {
+      return (
+        <div>
+        <h1>{"Hi, " + this.state.user.name + "!"}</h1>
+        <h3>{"You're a " + this.state.fields[this.state.user.field].slice(0, -1).toLowerCase() + "ist"}</h3>
+        <hr/>
+        <AddFileForm name={this.state.name} options={this.state.fields} onFileAdd={this.onSignupClicked.bind(this)} />
+        <hr/>
+        <DocumentList documents={this.state.documents} onRead={this.onRead.bind(this)}/>
+        <hr/>
+        <DocumentReader doc={this.state.selectedDocument} from={this.state.selectedDocumentsFromQuotes} to={this.state.selectedDocumentsToQuotes} fields={this.state.fields} web3={this.state.web3} onDownload={this.onDownload.bind(this)}/>
+        <hr/>
+        <hr/>
+        <FieldList options={this.state.fields} documents={this.state.fieldDocuments} onFieldChange={this.onFieldChange.bind(this)} />
+        </div>
+      )
+    }
   }
 }

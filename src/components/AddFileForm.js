@@ -7,17 +7,17 @@ export default class AddFileForm extends Component {
   constructor(props) {
     super(props)
     this.state = {
-      selected: "Quantum Physics",
+      //selected: "Quantum Physics",
       text: "",
       quotes: []
     }
   }
 
   onFileAdd(event) {
-    const { selected, quotes } = this.state
+    const { quotes } = this.state
     const file = event.target.files[0]
     const { onFileAdd } = this.props
-    onFileAdd(file, selected, quotes)
+    onFileAdd(file, quotes)
   }
 
   onAddClicked(event) {
@@ -28,6 +28,10 @@ export default class AddFileForm extends Component {
     })
   }
 
+  /*
+   * Since currently the user can only have one field, it doesn't make any sense
+   * for him to be able to choose the document's one
+   */
   render() {
     const createItem = item =>
     <option
@@ -43,17 +47,6 @@ export default class AddFileForm extends Component {
       placeholder="Please add a document"
       className="inputClass"
       onChange={this.onFileAdd.bind(this)} />
-
-      <p>Category:
-
-      <select
-      onChange={event => this.setState({ selected: event.target.value })}>
-      {this.props.options.map(createItem)}
-      </select>
-
-      </p>
-
-      <p></p>
 
       <input type="text" value={this.state.text} onChange={event => this.setState({ text: event.target.value })}/>
       <button onClick={this.onAddClicked.bind(this)}>Quote</button>

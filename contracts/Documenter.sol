@@ -10,12 +10,6 @@ import "../node_modules/zeppelin-solidity/contracts/ownership/Ownable.sol";
  */
 contract Documenter is Ownable {
 
-  /*
-   * Each document has a category. Well, eventually will have more than one.
-   * Current values are just a stub
-   */
-  enum Category { QUANTUM_PHYSICS, LEPUFOLOGY}
-
   // Authentication contract
   Authentication private authentication;
 
@@ -33,21 +27,21 @@ contract Documenter is Ownable {
    * @notice name param should be indexed, but dynamic properties cannot be decoded by web3 if marked this way
    * @notice https://ethereum.stackexchange.com/questions/6840/indexed-event-with-string-not-getting-logged/7170#7170
    * @param name of the new document
-   * @param category of the new document (indexed)
+   * @param field of the new document (indexed)
    * @param quotes of the new document
    * @param hash of the new document (indexed)
    * @param multihash of the new document
    * @param timestamp of the new document
    * @param owner address (indexed)
    */
-  event LogNewDocument(string name, uint indexed category, bytes32[] quotes, bytes32 indexed hash, bytes multihash, uint timestamp, address indexed owner);
+  event LogNewDocument(string name, uint indexed field, bytes32[] quotes, bytes32 indexed hash, bytes multihash, uint timestamp, address indexed owner);
 
   /**
    * @dev event for a quote made by a new document
-   * @param _from hash of the document making the quote (indexed)
-   * @param _to hash of the document being quoted (indexed)
+   * @param from hash of the document making the quote (indexed)
+   * @param to hash of the document being quoted (indexed)
    */
-  event LogQuote(bytes32 indexed _from, bytes32 indexed _to);
+  event LogQuote(bytes32 indexed from, bytes32 indexed to);
 
   /**
    * @dev modifier that checks if a document is new
@@ -59,11 +53,11 @@ contract Documenter is Ownable {
   }
 
   /**
-   * @dev modifier that checks if a category is valid
-   * @param _category of the document
+   * @dev modifier that checks if a field is valid
+   * @param _field of the document
    */
-  modifier isCategoryValid(uint _category) {
-    require(uint(Category.LEPUFOLOGY) >= _category);
+  modifier isFieldValid(uint _field) {
+    require(uint(Model.Field.LEPUFOLOGY) >= _field);
     _;
   }
 
@@ -98,13 +92,13 @@ contract Documenter is Ownable {
   /**
    * @dev public function that registers a document
    * @param _name of the document
-   * @param _category of the document
+   * @param _field of the document
    * @param _quotes of the document
    * @param _hash of the document
    * @param _multihash of the document's IPFS storage
    * @param _timestamp of the document
    */
-  function notarizeDocument(string _name, uint _category, bytes32[] _quotes, bytes32 _hash, bytes _multihash, uint _timestamp) public isNewDocument(_hash) isCategoryValid(_category) {
+  function notarizeDocument(string _name, uint _field, bytes32[] _quotes, bytes32 _hash, bytes _multihash, uint _timestamp) public isNewDocument(_hash) isFieldValid(_field) {
     // Not really sure this is needed or a waste of gas
     for (uint i = 0; i < _quotes.length; i++) {
       require(documentExists(_quotes[i]));
@@ -112,7 +106,7 @@ contract Documenter is Ownable {
 
     poe[_hash] = msg.sender;
     authentication.addDocument(msg.sender, _hash);
-    LogNewDocument(_name, _category, _quotes, _hash, _multihash, _timestamp, msg.sender);
+    LogNewDocument(_name, _field, _quotes, _hash, _multihash, _timestamp, msg.sender);
 
     for (uint j = 0; j < _quotes.length; j++) {
       LogQuote(_hash, _quotes[j]);

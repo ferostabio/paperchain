@@ -8,7 +8,7 @@ export default class DocumentReader extends Component {
   }
 
   render() {
-    const { doc, categories, web3 } = this.props
+    const { doc, fields, web3 } = this.props
     if (doc === undefined) {
       return (
         <div>
@@ -20,7 +20,7 @@ export default class DocumentReader extends Component {
         <div>
         <h3>Document</h3>
         <p>{doc.name}</p>
-        <p>{categories[doc.category.toNumber()]}</p>
+        <p>{fields[doc.field.toNumber()]}</p>
         <p>{web3.toAscii(doc.hash)}</p>
         <p>{new Date(doc.timestamp.toNumber()).toString()}</p>
         <h5>Quotes made to</h5>
