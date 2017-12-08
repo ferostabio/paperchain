@@ -20,7 +20,7 @@ export default class AddFileForm extends Component {
     onFileAdd(file, selected, quotes)
   }
 
-  onAddClicked() {
+  onAddClicked(event) {
     const text = this.state.text
     this.setState({...this.state,
       quotes: [...this.state.quotes, text],
@@ -56,7 +56,7 @@ export default class AddFileForm extends Component {
       <p></p>
 
       <input type="text" value={this.state.text} onChange={event => this.setState({ text: event.target.value })}/>
-      <button onClick={this.onAddClicked}>Quote</button>
+      <button onClick={this.onAddClicked.bind(this)}>Quote</button>
 
       <ul>
         {this.state.quotes.map(quote => <li key={quote}>{quote} </li>)}

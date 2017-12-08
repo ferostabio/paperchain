@@ -1,10 +1,13 @@
 // Libraries
 const CryptoJS = require("crypto-js")
-const Storage = require("../utils/storage.js")
 const fileDownload = require("js-file-download")
 
 import React, { Component } from 'react'
 import Contract from 'truffle-contract'
+
+import Storage from '../utils/storage'
+
+const storage = new Storage()
 
 // Contract Abis
 import Authentication from '../build/contracts/Authentication.json'
@@ -39,7 +42,9 @@ export default class App extends Component {
       storage_id: undefined,
       storage_version: undefined,
       storage_protocol: undefined,
-      selectedDocument: undefined
+      selectedDocument: undefined,
+      selectedDocumentsFromQuotes: [],
+      selectedDocumentsToQuotes: []
     }
   }
 
@@ -75,11 +80,11 @@ export default class App extends Component {
     })
 
     // setup IPFS
-    Storage.start('ipfs-paperchain').then(error => {
+    storage.start('ipfs-paperchain').then(error => {
       if (error) {
         console.log(error)
       }
-      return Storage.id()
+      return storage.info()
     }).then(info => {
       this.setState({
         storage_id: info[0],
@@ -140,7 +145,7 @@ export default class App extends Component {
         alert("Document already exists")
         return
       }
-      const multihash = await Storage.add(file.name, Buffer.from(binary))
+      const multihash = await storage.add(file.name, Buffer.from(binary))
       if (multihash !== undefined) {
         documenterInstance.notarizeDocument(file.name, index, quotes, hash, multihash, Date.now(), { from: defaultAccount })
       }
@@ -184,7 +189,12 @@ export default class App extends Component {
   }
 
   onRead(doc) {
-    this.setState({...this.state, selectedDocument: doc})
+    this.setState({...this.state,
+      selectedDocument: doc,
+      selectedDocumentsToQuotes: [],
+      selectedDocumentsFromQuotes: []
+    })
+    this.getDocumentQuotes(doc)
   }
 
   async onDownload(doc) {
@@ -194,15 +204,73 @@ export default class App extends Component {
     }
     const { web3 } = this.state
     const multihash = web3.toAscii(doc.multihash)
-    const raw = await Storage.cat(multihash)
+    const raw = await storage.cat(multihash)
 
     fileDownload(raw, doc.name)
+  }
+
+  // Document quotes
+
+  loadDoc(block, hash) {
+    return new Promise((resolve, reject) => {
+      const { documenterInstance, defaultAccount } = this.state
+      documenterInstance.LogNewDocument({hash: hash}, {fromBlock: block, toBlock: "latest"}).get((error, result) => {
+        if (error) {
+          reject(error)
+        } else {
+          console.log('result')
+          console.log(result)
+          const document = result.map(x => { return x.args })[0]
+          console.log(document)
+          resolve(document)
+        }
+      })
+    })
+  }
+
+  async getQuotes(block, from, callback) {
+    const { documenterInstance } = this.state
+    documenterInstance.LogQuote(from, {fromBlock: block, toBlock: "latest"}).get((error, result) => {
+      if (error) {
+        console.log("Nooooo! " + error)
+      } else {
+        var args = result.map(x => { return x.args })
+        var to = from["_from"] !== undefined
+        var actions = args.map(quote => {
+          if (to) {
+            return this.loadDoc(block, quote._to)
+          } else {
+            return this.loadDoc(block, quote._from)
+          }
+        })
+        Promise.all(actions).then(documents => {
+          console.log('to ' + to)
+          console.log(documents)
+          callback(documents)
+        })
+      }
+    })
+  }
+
+  async getDocumentQuotes(doc) {
+    const { documenterInstance } = this.state
+    const blockNumber = await documenterInstance.getDeploymentBlockNumber.call()
+    this.getQuotes(blockNumber, {_from: doc.hash}, documents => {
+      this.setState({...this.state,
+        selectedDocumentsFromQuotes: documents,
+      })
+    })
+    this.getQuotes(blockNumber, {_to: doc.hash}, documents => {
+      this.setState({...this.state,
+        selectedDocumentsToQuotes: documents,
+      })
+    })
   }
 
   // Category related
 
   async loadCategoryDocuments(category) {
-    // loadDocuments() variation
+    // loadDocuments() variation, a watchCategoryDocuments method will need to be added as well
     const { documenterInstance } = this.state
     const blockNumber = await documenterInstance.getDeploymentBlockNumber.call()
     documenterInstance.LogNewDocument({category: category}, {fromBlock: blockNumber, toBlock: "latest"}).get((error, result) => {
@@ -234,7 +302,7 @@ export default class App extends Component {
       <hr/>
       <DocumentList documents={this.state.documents} onRead={this.onRead.bind(this)}/>
       <hr/>
-      <DocumentReader doc={this.state.selectedDocument} categories={this.state.categories} web3={this.state.web3} onDownload={this.onDownload.bind(this)}/>
+      <DocumentReader doc={this.state.selectedDocument} from={this.state.selectedDocumentsFromQuotes} to={this.state.selectedDocumentsToQuotes} categories={this.state.categories} web3={this.state.web3} onDownload={this.onDownload.bind(this)}/>
       <hr/>
       <hr/>
       <CategoryList options={this.state.categories} documents={this.state.categoryDocuments} onCategoryChange={this.onCategoryChange.bind(this)} />

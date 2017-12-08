@@ -32,7 +32,7 @@ function getDocuments(documenter, account, currentBlock) {
     })
   })
 }
-
+/*
 contract("Documenter", accounts => {
   let authentication, documenter, fileHash = {}
 
@@ -109,4 +109,4 @@ contract("Documenter", accounts => {
     var error = await watchDocuments(documenter, defaultAccount, web3.eth.blockNumber, testFileName, defaultCategory, fileHash)
     assert.equal(error, null, "Watcher returned error")
   })
-})
+})*/

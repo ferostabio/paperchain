@@ -35,12 +35,12 @@ contract Documenter is Ownable {
    * @param name of the new document
    * @param category of the new document (indexed)
    * @param quotes of the new document
-   * @param hash of the new document
+   * @param hash of the new document (indexed)
    * @param multihash of the new document
    * @param timestamp of the new document
    * @param owner address (indexed)
    */
-  event LogNewDocument(string name, uint indexed category, bytes32[] quotes, bytes32 hash, bytes multihash, uint timestamp, address indexed owner);
+  event LogNewDocument(string name, uint indexed category, bytes32[] quotes, bytes32 indexed hash, bytes multihash, uint timestamp, address indexed owner);
 
   /**
    * @dev event for a quote made by a new document

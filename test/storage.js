@@ -1,6 +1,6 @@
-/*
 const fs = require("../utils/file.js")
-const storage = require("../utils/storage.js")
+const Storage = require("../utils/storage.js")
+const storage = new Storage()
 
 const testFileName = "masque.txt"
 const testFilePath = "./assets/" + testFileName
@@ -30,4 +30,3 @@ describe("Storage", () => {
     assert.equal(content.toString(), fileContents.toString(), "Undefined contents of file")
   })
 })
-*/
