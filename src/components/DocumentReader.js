@@ -2,7 +2,7 @@ import React, { Component } from 'react'
 
 export default class DocumentReader extends Component {
 
-  onDownloadClicked(index, event) {
+  onDownloadClicked() {
     const { doc, onDownload } = this.props
     onDownload(doc)
   }
@@ -23,7 +23,7 @@ export default class DocumentReader extends Component {
         <p>{categories[doc.category.toNumber()]}</p>
         <p>{web3.toAscii(doc.hash)}</p>
         <p>{new Date(doc.timestamp.toNumber()).toString()}</p>
-        <button onClick={this.onDownloadClicked.bind(this, doc)}>Download</button>
+        <button onClick={this.onDownloadClicked}>Download</button>
         </div>
       )
     }

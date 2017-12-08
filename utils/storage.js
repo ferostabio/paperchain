@@ -1,8 +1,8 @@
 const IPFS = require("ipfs")
 const fs = require("./file")
 
-var node = undefined
-var nodePath = undefined
+let node = undefined
+let nodePath = undefined
 
 // IPFS proxy: as basic as it gets, currently. Almost no error handling, etc
 

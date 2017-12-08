@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 
-var FileInput = require('react-file-input')
+const FileInput = require('react-file-input')
 
 export default class AddFileForm extends Component {
 
@@ -20,10 +20,12 @@ export default class AddFileForm extends Component {
     onFileAdd(file, selected, quotes)
   }
 
-  onAddClicked(event) {
-    this.state.quotes.push(this.state.text)
-    this.state.text = ""
-    this.forceUpdate()
+  onAddClicked() {
+    const text = this.state.text
+    this.setState({...this.state,
+      quotes: [...this.state.quotes, text],
+      text: ""
+    })
   }
 
   render() {
@@ -54,7 +56,7 @@ export default class AddFileForm extends Component {
       <p></p>
 
       <input type="text" value={this.state.text} onChange={event => this.setState({ text: event.target.value })}/>
-      <button onClick={this.onAddClicked.bind(this)}>Quote</button>
+      <button onClick={this.onAddClicked}>Quote</button>
 
       <ul>
         {this.state.quotes.map(quote => <li key={quote}>{quote} </li>)}

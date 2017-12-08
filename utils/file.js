@@ -6,8 +6,8 @@ const crypto = require("crypto")
 
 module.exports.hashFile = path => {
   return new Promise((resolve, reject) => {
-    var shasum = crypto.createHash("md5")
-    var s = fs.ReadStream(path)
+    let shasum = crypto.createHash("md5")
+    let s = fs.ReadStream(path)
     s.on("data", d => { shasum.update(d) })
     s.on("end", () => {
       resolve(shasum.digest("hex"))
@@ -18,8 +18,8 @@ module.exports.hashFile = path => {
 // requires FlieAPI and a compatible browser
 module.exports.readBlob = file => {
   return new Promise((resolve, reject) => {
-    var bb = new Blob(file)
-    var f = new FileReader()
+    let bb = new Blob(file)
+    let f = new FileReader()
     f.onload = e => {
       resolve(e.target.result)
     }

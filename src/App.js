@@ -76,6 +76,9 @@ export default class App extends Component {
 
     // setup IPFS
     Storage.start('ipfs-paperchain').then(error => {
+      if (error) {
+        console.log(error)
+      }
       return Storage.id()
     }).then(info => {
       this.setState({
@@ -86,7 +89,7 @@ export default class App extends Component {
     })
 
     // get logged in user, otherwise request user (un)friendly signup
-    var name
+    let name
     try {
       name = await authenticationInstance.login.call({from: defaultAccount})
       this.didLogin(web3.toUtf8(name))
@@ -126,18 +129,18 @@ export default class App extends Component {
     const index = this.state.categories.indexOf(category)
 
     // read file and get it's hash
-    var reader = new FileReader();
+    const reader = new FileReader();
     reader.onload = async event => {
       if (event === undefined) return
       const binary = event.target.result;
-      var hash = CryptoJS.MD5(binary).toString()
+      const hash = CryptoJS.MD5(binary).toString()
       // check if the document exists. hey, this should use `await` instead of promises
-      var exists = await documenterInstance.documentExists.call(hash)
+      const exists = await documenterInstance.documentExists.call(hash)
       if (exists) {
         alert("Document already exists")
         return
       }
-      var multihash = await Storage.add(file.name, Buffer.from(binary))
+      const multihash = await Storage.add(file.name, Buffer.from(binary))
       if (multihash !== undefined) {
         documenterInstance.notarizeDocument(file.name, index, quotes, hash, multihash, Date.now(), { from: defaultAccount })
       }
@@ -149,14 +152,14 @@ export default class App extends Component {
     console.log("about to load")
     // load user's documents off-storage ;) -had to simplify some things in order to get started this way, but it's worth it
     const { documenterInstance, defaultAccount } = this.state
-    var blockNumber = await documenterInstance.getDeploymentBlockNumber.call()
+    const blockNumber = await documenterInstance.getDeploymentBlockNumber.call()
     // filter so only documents created by the user are fetched starting when the contract was deployed are fetched (better than zero)
     documenterInstance.LogNewDocument({owner: defaultAccount}, {fromBlock: blockNumber, toBlock: "latest"}).get((error, result) => {
       if (error) {
         console.log("Nooooo! " + error)
       } else {
         console.log(result)
-        var documents = result.map(x => { return x.args })
+        const documents = result.map(x => { return x.args })
         this.setState({...this.state, documents: documents})
       }
     })
@@ -165,7 +168,7 @@ export default class App extends Component {
   async watchNewDocuments() {
     // watch for new registered documents
     const { web3, documenterInstance, defaultAccount } = this.state
-    var blockNumber = await promisify(web3.eth.getBlockNumber)
+    const blockNumber = await promisify(web3.eth.getBlockNumber)
     // filter so only documents created by the user are fetched and starting in the current block
     documenterInstance.LogNewDocument({owner: defaultAccount}, {fromBlock: blockNumber, toBlock: "latest"}).watch((error, result) => {
       if (error) {
@@ -201,13 +204,13 @@ export default class App extends Component {
   async loadCategoryDocuments(category) {
     // loadDocuments() variation
     const { documenterInstance } = this.state
-    var blockNumber = await documenterInstance.getDeploymentBlockNumber.call()
+    const blockNumber = await documenterInstance.getDeploymentBlockNumber.call()
     documenterInstance.LogNewDocument({category: category}, {fromBlock: blockNumber, toBlock: "latest"}).get((error, result) => {
       if (error) {
         console.log("Nooooo! " + error)
       } else {
         console.log(result)
-        var documents = result.map(x => { return x.args })
+        const documents = result.map(x => { return x.args })
         console.log(documents)
         this.setState({...this.state, categoryDocuments: documents})
       }
