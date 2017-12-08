@@ -145,12 +145,15 @@ export default class App extends Component {
         alert("Document already exists")
         return
       }
+
+
+
       const multihash = await storage.add(file.name, Buffer.from(binary))
       if (multihash !== undefined) {
         documenterInstance.notarizeDocument(file.name, index, quotes, hash, multihash, Date.now(), { from: defaultAccount })
       }
     }
-    reader.readAsBinaryString(file)
+    reader.readAsArrayBuffer(file)
   }
 
   async loadDocuments() {

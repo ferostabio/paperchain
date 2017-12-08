@@ -39,7 +39,7 @@ export default class AddFileForm extends Component {
       <div>
 
       <FileInput name="documentUploader"
-      accept=".txt"
+      accept=".txt,.pdf,.doc,.docx"
       placeholder="Please add a document"
       className="inputClass"
       onChange={this.onFileAdd.bind(this)} />
