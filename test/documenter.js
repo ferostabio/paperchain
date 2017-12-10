@@ -11,14 +11,14 @@ function documentEvent(documenter, account, currentBlock) {
   return documenter.LogNewDocument({owner: account}, {fromBlock: currentBlock, toBlock: "latest"})
 }
 
-function watchDocuments(documenter, account, currentBlock, name, field, hash) {
+function watchDocuments(documenter, account, currentBlock, name, field, refereed, hash) {
   return new Promise((resolve, reject) => {
     var event = documentEvent(documenter, account, currentBlock)
     event.watch((error, result) => {
       resolve(error)
       event.stopWatching()
     })
-    documenter.notarizeDocument(name, field, [], hash, testFileStorageHash, Date.now(), { from: account})
+    documenter.notarizeDocument(name, field, refereed, [], hash, testFileStorageHash, Date.now(), { from: account})
   })
 }
 
@@ -38,6 +38,7 @@ contract("Documenter", accounts => {
   const defaultAccount = accounts[0]
   const defaultTx = { from: defaultAccount }
   const defaultField = 1
+  const defaultRefereedStatus = true
   const now = Date.now()
   var notarize = false // Variable set to false each time i need beforeEach not to notarize a document
 
@@ -46,7 +47,7 @@ contract("Documenter", accounts => {
     await authentication.signup('user', 0, defaultTx)
     documenter = await Documenter.new(authentication.address)
     if (notarize) {
-      await documenter.notarizeDocument(testFileName, defaultField, [], fileHash, testFileStorageHash, now, defaultTx)
+      await documenter.notarizeDocument(testFileName, defaultField, defaultRefereedStatus, [], fileHash, testFileStorageHash, now, defaultTx)
     }
   })
 
@@ -55,7 +56,7 @@ contract("Documenter", accounts => {
     var exists = await documenter.documentExists.call(fileHash)
     assert.isNotOk(exists, "Hash already exists")
 
-    await documenter.notarizeDocument(testFileName, defaultField, [], fileHash, testFileStorageHash, now, defaultTx)
+    await documenter.notarizeDocument(testFileName, defaultField, defaultRefereedStatus, [], fileHash, testFileStorageHash, now, defaultTx)
     exists = await documenter.documentExists.call(fileHash)
     assert.isOk(exists, "Didn't add hash")
     notarize = true
@@ -76,7 +77,7 @@ contract("Documenter", accounts => {
 
   it("a user shouldn't be able to add an existing document", async () => {
     try {
-      await documenter.notarizeDocument(testFileName, defaultField, [], fileHash, testFileStorageHash, Date.now(), defaultTx)
+      await documenter.notarizeDocument(testFileName, defaultField, defaultRefereedStatus, [], fileHash, testFileStorageHash, Date.now(), defaultTx)
       assert(false, "User added an existing document")
     } catch (error) {
       assert.match(error.message, /invalid opcode/, defaultErrorMessage)
@@ -86,7 +87,7 @@ contract("Documenter", accounts => {
 
   it("a user shouldn't be able to notarize a document with an invalid field", async () => {
     try {
-      await documenter.notarizeDocument(testFileName, 2, [], fileHash, testFileStorageHash, Date.now(), defaultTx)
+      await documenter.notarizeDocument(testFileName, 2, defaultRefereedStatus, [], fileHash, testFileStorageHash, Date.now(), defaultTx)
       assert(false, "User added a document with invalid field")
     } catch (error) {
       assert.match(error.message, /invalid opcode/, defaultErrorMessage)
@@ -96,7 +97,7 @@ contract("Documenter", accounts => {
 
   it("shouldn't notarize a document with a not existing quote", async () => {
     try {
-      await documenter.notarizeDocument(testFileName, defaultField, ["meesa_not_exists"], fileHash, testFileStorageHash, Date.now(), defaultTx)
+      await documenter.notarizeDocument(testFileName, defaultField, defaultRefereedStatus, ["meesa_not_exists"], fileHash, testFileStorageHash, Date.now(), defaultTx)
       assert(false, "User added a document with not existing quote")
     } catch (error) {
       assert.match(error.message, /invalid opcode/, defaultErrorMessage)
@@ -105,7 +106,7 @@ contract("Documenter", accounts => {
   })
 
   it("should fire an event when a new file is added", async () => {
-    var error = await watchDocuments(documenter, defaultAccount, web3.eth.blockNumber, testFileName, defaultField, fileHash)
+    var error = await watchDocuments(documenter, defaultAccount, web3.eth.blockNumber, testFileName, defaultField, defaultRefereedStatus, fileHash)
     assert.equal(error, null, "Watcher returned error")
   })
 })

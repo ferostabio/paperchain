@@ -59,11 +59,4 @@ contract("Authentication", accounts => {
     var error = await watchSignup(authentication, otherAccount, web3.eth.blockNumber, "Vitalik", defaultField)
     assert.equal(error, null, "Watcher returned error")
   })
-
-  it("should add and retrieve document data", async () => {
-    var first = await authentication.getNumberOfDocuments.call(defaultAccount)
-    await authentication.addDocument(defaultAccount, "hash")
-    var second = await authentication.getNumberOfDocuments.call(defaultAccount)
-    assert.equal(++first, second.toNumber(), "Document wasn't added as it should")
-  })
 })

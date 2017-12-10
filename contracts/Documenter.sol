@@ -28,13 +28,14 @@ contract Documenter is Ownable {
    * @notice https://ethereum.stackexchange.com/questions/6840/indexed-event-with-string-not-getting-logged/7170#7170
    * @param name of the new document
    * @param field of the new document (indexed)
+   * @param refereed status of the new document
    * @param quotes of the new document
    * @param hash of the new document (indexed)
    * @param multihash of the new document
    * @param timestamp of the new document
    * @param owner address (indexed)
    */
-  event LogNewDocument(string name, uint indexed field, bytes32[] quotes, bytes32 indexed hash, bytes multihash, uint timestamp, address indexed owner);
+  event LogNewDocument(string name, uint indexed field, bool refereed, bytes32[] quotes, bytes32 indexed hash, bytes multihash, uint timestamp, address indexed owner);
 
   /**
    * @dev event for a quote made by a new document
@@ -93,20 +94,20 @@ contract Documenter is Ownable {
    * @dev public function that registers a document
    * @param _name of the document
    * @param _field of the document
+   * @param _refereed status of the document
    * @param _quotes of the document
    * @param _hash of the document
    * @param _multihash of the document's IPFS storage
    * @param _timestamp of the document
    */
-  function notarizeDocument(string _name, uint _field, bytes32[] _quotes, bytes32 _hash, bytes _multihash, uint _timestamp) public isNewDocument(_hash) isFieldValid(_field) {
-    // Not really sure this is needed or a waste of gas
+  function notarizeDocument(string _name, uint _field, bool _refereed, bytes32[] _quotes, bytes32 _hash, bytes _multihash, uint _timestamp) public isNewDocument(_hash) isFieldValid(_field) {
+    // Not really sure this is needed or a waste of gas, should probably be done via web3
     for (uint i = 0; i < _quotes.length; i++) {
       require(documentExists(_quotes[i]));
     }
 
     poe[_hash] = msg.sender;
-    authentication.addDocument(msg.sender, _hash);
-    LogNewDocument(_name, _field, _quotes, _hash, _multihash, _timestamp, msg.sender);
+    LogNewDocument(_name, _field, _refereed, _quotes, _hash, _multihash, _timestamp, msg.sender);
 
     for (uint j = 0; j < _quotes.length; j++) {
       LogQuote(_hash, _quotes[j]);

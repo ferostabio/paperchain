@@ -17,13 +17,11 @@ library Model {
   enum Field { QUANTUM_PHYSICS, LEPUFOLOGY}
 
   /*
-   * User struct; there's a refactor happening and i'm not entirely sure
-   * about some things such as the documentList bytes[]. We'll see.
+   * User struct
    */
   struct User {
     bytes name;
     uint field;
-    bytes32[] documentList;
-    uint numberOfDocuments;
+    mapping (bytes32 => bool) reviews;
   }
 }

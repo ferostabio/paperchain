@@ -85,24 +85,4 @@ contract Authentication is Ownable {
     }
     return (users[msg.sender].name);
   }
-
-  /**
-   * @dev function that adds a document to a user
-   * @param _owner address
-   * @param _hash of the document
-   */
-  function addDocument(address _owner, bytes32 _hash) public isExistingUser(_owner) {
-    Model.User storage user = users[_owner];
-    user.documentList.push(_hash);
-    user.numberOfDocuments++;
-  }
-
-  /**
-   * @dev helper function that returns a user's number of documents
-   * @param _owner address
-   */
-  function getNumberOfDocuments(address _owner) public view isExistingUser(_owner) returns (uint) {
-    Model.User storage user = users[_owner];
-    return user.numberOfDocuments;
-  }
 }

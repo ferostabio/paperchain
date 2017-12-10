@@ -120,7 +120,7 @@ export default class App extends Component {
     this.didLogin(user)
   }
 
-  onFileAdd(file, quotes) {
+  onFileAdd(file, refereed, quotes) {
     // check if IPFS setup has completed
     if (this.state.storage_started === false) {
       alert("Please wait for IPFS to finish loading")
@@ -148,7 +148,7 @@ export default class App extends Component {
       }
       const multihash = await storage.add(file.name, Buffer.from(binary))
       if (multihash !== undefined) {
-        documenterInstance.notarizeDocument(file.name, index, quotes, hash, multihash, Date.now(), { from: defaultAccount })
+        documenterInstance.notarizeDocument(file.name, index, refereed, quotes, hash, multihash, Date.now(), { from: defaultAccount })
       }
     }
     reader.readAsArrayBuffer(file)
@@ -304,7 +304,7 @@ export default class App extends Component {
         <h1>{"Hi, " + this.state.user.name + "!"}</h1>
         <h3>{"You're a " + this.state.fields[this.state.user.field].slice(0, -1).toLowerCase() + "ist"}</h3>
         <hr/>
-        <AddFileForm name={this.state.name} options={this.state.fields} onFileAdd={this.onSignupClicked.bind(this)} />
+        <AddFileForm name={this.state.name} options={this.state.fields} onFileAdd={this.onFileAdd.bind(this)} />
         <hr/>
         <DocumentList documents={this.state.documents} onRead={this.onRead.bind(this)}/>
         <hr/>

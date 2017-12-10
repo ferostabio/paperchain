@@ -7,17 +7,19 @@ export default class AddFileForm extends Component {
   constructor(props) {
     super(props)
     this.state = {
-      //selected: "Quantum Physics",
+      options: ["Refereed", "Non-refereed"],
+      refereed: "Refereed",
       text: "",
       quotes: []
     }
   }
 
   onFileAdd(event) {
-    const { quotes } = this.state
+    const { refereed, quotes } = this.state
     const file = event.target.files[0]
     const { onFileAdd } = this.props
-    onFileAdd(file, quotes)
+    const status = refereed === "Refereed"
+    onFileAdd(file, status, quotes)
   }
 
   onAddClicked(event) {
@@ -47,6 +49,11 @@ export default class AddFileForm extends Component {
       placeholder="Please add a document"
       className="inputClass"
       onChange={this.onFileAdd.bind(this)} />
+
+      <select
+      onChange={event => this.setState({ refereed: event.target.value })}>
+      {this.state.options.map(createItem)}
+      </select>
 
       <input type="text" value={this.state.text} onChange={event => this.setState({ text: event.target.value })}/>
       <button onClick={this.onAddClicked.bind(this)}>Quote</button>
