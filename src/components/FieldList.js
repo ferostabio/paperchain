@@ -9,8 +9,8 @@ export default class FieldList extends Component {
   }
 
   render() {
-    const documents = this.props.documents
-    if (documents !== undefined) {
+    const papers = this.props.papers
+    if (papers !== undefined) {
       const createItem = item =>
       <option
       key={item}
@@ -24,7 +24,7 @@ export default class FieldList extends Component {
         {this.props.options.map(createItem)}
         </select>
         <ul>
-        {this.props.documents.map((document, index) => <li key={index}>{document.name}</li>)}
+        {this.props.papers.map((paper, index) => <li key={index}>{paper.name}</li>)}
         </ul>
         </div>
       )

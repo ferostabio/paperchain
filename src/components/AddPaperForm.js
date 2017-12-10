@@ -2,7 +2,7 @@ import React, { Component } from 'react'
 
 const FileInput = require('react-file-input')
 
-export default class AddFileForm extends Component {
+export default class AddPaperForm extends Component {
 
   constructor(props) {
     super(props)
@@ -32,7 +32,7 @@ export default class AddFileForm extends Component {
 
   /*
    * Since currently the user can only have one field, it doesn't make any sense
-   * for him to be able to choose the document's one
+   * for him to be able to choose the paper's one
    */
   render() {
     const createItem = item =>

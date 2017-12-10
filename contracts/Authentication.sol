@@ -45,11 +45,23 @@ contract Authentication is Ownable {
 
   /**
    * @dev modifier that checks if a field is valid
-   * @param _field of the document
+   * @param _field of the paper
    * @notice duplicated from Authentication.sol, check Model.sol comment
    */
   modifier isFieldValid(uint _field) {
     require(uint(Model.Field.LEPUFOLOGY) >= _field);
+    _;
+  }
+
+  /**
+   * @dev modifier that checks if a user can validate a paper
+   * @param _hash of the paper
+   * @notice only checks that the user hasn't reviewed the paper
+   * @notice checking that the paper can be reviewed should be done from web3
+   */
+  modifier canReviewPaper(bytes32 _hash) {
+    require(userExists(msg.sender));
+    require(users[msg.sender].reviews[_hash] == false)
     _;
   }
 
@@ -84,5 +96,13 @@ contract Authentication is Ownable {
       LogSignup(_name, _field, msg.sender);
     }
     return (users[msg.sender].name);
+  }
+
+  /**
+   * @dev function that performs a peer review
+   * @param _hash of the paper
+   */
+  function reviewPaper(bytes32 _hash) public canReviewPaper(_hash) {
+    users[msg.sender].reviews[_hash] = true;
   }
 }

@@ -19,8 +19,8 @@ import promisify from './utils/promisify'
 // Components
 import AuthForm from './components/AuthForm'
 import AddFileForm from './components/AddFileForm'
-import DocumentList from './components/DocumentList'
-import DocumentReader from './components/DocumentReader'
+import PaperList from './components/PaperList'
+import PaperReader from './components/PaperReader'
 import FieldList from './components/FieldList'
 
 // Currently... everything is here. And i do mean it. Everything. Will eventually grow into a much nicer codebase, of course.
@@ -31,25 +31,25 @@ export default class App extends Component {
     // Set default state
     this.state = {
       fields: ["Quantum Physics", "Lepufology"], // Taken from Documenter.sol
-      selectedField: 0, // Both this and fieldDocuments are just a sample of data analytics
-      fieldDocuments: [],
-      documents: [],
+      selectedField: 0, // Both this and fieldPapers are just a sample of data analytics
+      fieldPapers: [],
+      papers: [],
       defaultAccount: undefined,
       authenticationInstance: undefined,
       documenterInstance: undefined,
       web3: undefined,
       user: undefined,
       storage_started: false,
-      selectedDocument: undefined,
-      selectedDocumentsFromQuotes: [],
-      selectedDocumentsToQuotes: []
+      selectedPaper: undefined,
+      selectedPaperFromQuotes: [],
+      selectedPaperToQuotes: []
     }
   }
 
   componentWillMount() {
     this.initialize()
     .then(() => {
-      this.watchNewDocuments()
+      this.watchNewPapers()
     })
   }
 
@@ -99,17 +99,17 @@ export default class App extends Component {
       console.log(error)
     }
 
-    // No need to have a logged in user to get documents by field
-    this.loadFieldDocuments(0)
+    // No need to have a logged in user to get papers by field
+    this.loadFieldPapers(0)
   }
 
   didLogin(user) {
-    // store user in state and load documents
+    // store user in state and load papers
     this.setState({
       ...this.state,
       user: user
     })
-    this.loadDocuments()
+    this.loadPapers()
   }
 
   async onSignupClicked(name, field) {
@@ -140,90 +140,90 @@ export default class App extends Component {
       if (event === undefined) return
       const binary = event.target.result;
       const hash = CryptoJS.MD5(binary).toString()
-      // check if the document exists. hey, this should use `await` instead of promises
-      const exists = await documenterInstance.documentExists.call(hash)
+      // check if the paper exists. hey, this should use `await` instead of promises
+      const exists = await documenterInstance.paperExists.call(hash)
       if (exists) {
-        alert("Document already exists")
+        alert("Paper already exists")
         return
       }
       const multihash = await storage.add(file.name, Buffer.from(binary))
       if (multihash !== undefined) {
-        documenterInstance.notarizeDocument(file.name, index, refereed, quotes, hash, multihash, Date.now(), { from: defaultAccount })
+        documenterInstance.registerPaper(file.name, index, refereed, quotes, hash, multihash, Date.now(), { from: defaultAccount })
       }
     }
     reader.readAsArrayBuffer(file)
   }
 
-  async loadDocuments() {
+  async loadPapers() {
     console.log("about to load")
-    // load user's documents off-storage ;) -had to simplify some things in order to get started this way, but it's worth it
+    // load user's papers off-storage ;) -had to simplify some things in order to get started this way, but it's worth it
     const { documenterInstance, defaultAccount } = this.state
     const blockNumber = await documenterInstance.getDeploymentBlockNumber.call()
-    // filter so only documents created by the user are fetched starting when the contract was deployed are fetched (better than zero)
-    documenterInstance.LogNewDocument({owner: defaultAccount}, {fromBlock: blockNumber, toBlock: "latest"}).get((error, result) => {
+    // filter so only papers created by the user are fetched starting when the contract was deployed are fetched (better than zero)
+    documenterInstance.LogNewPaper({owner: defaultAccount}, {fromBlock: blockNumber, toBlock: "latest"}).get((error, result) => {
       if (error) {
         console.log("Nooooo! " + error)
       } else {
         console.log(result)
-        const documents = result.map(x => { return x.args })
-        this.setState({...this.state, documents: documents})
+        const papers = result.map(x => { return x.args })
+        this.setState({...this.state, papers: papers})
       }
     })
   }
 
-  async watchNewDocuments() {
-    // watch for new registered documents
+  async watchNewPapers() {
+    // watch for new registered papers
     const { web3, documenterInstance, defaultAccount } = this.state
     const blockNumber = await promisify(web3.eth.getBlockNumber)
-    // filter so only documents created by the user are fetched and starting in the current block
-    documenterInstance.LogNewDocument({owner: defaultAccount}, {fromBlock: blockNumber, toBlock: "latest"}).watch((error, result) => {
+    // filter so only papers created by the user are fetched and starting in the current block
+    documenterInstance.LogNewPaper({owner: defaultAccount}, {fromBlock: blockNumber, toBlock: "latest"}).watch((error, result) => {
       if (error) {
         console.log("Nooooo! " + error)
       } else {
         console.log("Result: " + JSON.stringify(result.args))
-        // just in case: check if the document hasn't been added already
-        if (this.state.documents.filter(document => (document.hash === result.args.hash)).length === 0) {
-          this.setState({...this.state, documents: [...this.state.documents, result.args]})
+        // just in case: check if the paper hasn't been added already
+        if (this.state.papers.filter(paper => (paper.hash === result.args.hash)).length === 0) {
+          this.setState({...this.state, papers: [...this.state.papers, result.args]})
         }
       }
     })
   }
 
-  onRead(doc) {
+  onRead(paper) {
     this.setState({...this.state,
-      selectedDocument: doc,
-      selectedDocumentsToQuotes: [],
-      selectedDocumentsFromQuotes: []
+      selectedPaper: paper,
+      selectedPaperToQuotes: [],
+      selectedPaperFromQuotes: []
     })
-    this.getDocumentQuotes(doc)
+    this.getPaperQuotes(paper)
   }
 
-  async onDownload(doc) {
+  async onDownload(paper) {
     // check if IPFS setup has completed
     if (this.state.storage_started === false) {
       alert("Please wait for IPFS to finish loading")
     }
     const { web3 } = this.state
-    const multihash = web3.toAscii(doc.multihash)
+    const multihash = web3.toAscii(paper.multihash)
     const raw = await storage.cat(multihash)
 
-    fileDownload(raw, doc.name)
+    fileDownload(raw, paper.name)
   }
 
-  // Document quotes
+  // Paper quotes
 
-  loadDoc(block, hash) {
+  loadPaper(block, hash) {
     return new Promise((resolve, reject) => {
       const { documenterInstance, defaultAccount } = this.state
-      documenterInstance.LogNewDocument({hash: hash}, {fromBlock: block, toBlock: "latest"}).get((error, result) => {
+      documenterInstance.LogNewPaper({hash: hash}, {fromBlock: block, toBlock: "latest"}).get((error, result) => {
         if (error) {
           reject(error)
         } else {
           console.log('result')
           console.log(result)
-          const document = result.map(x => { return x.args })[0]
-          console.log(document)
-          resolve(document)
+          const paper = result.map(x => { return x.args })[0]
+          console.log(paper)
+          resolve(paper)
         }
       })
     })
@@ -239,56 +239,56 @@ export default class App extends Component {
         const to = from["from"] !== undefined
         const actions = args.map(quote => {
           if (to) {
-            return this.loadDoc(block, quote.to)
+            return this.loadPaper(block, quote.to)
           } else {
-            return this.loadDoc(block, quote.from)
+            return this.loadPaper(block, quote.from)
           }
         })
-        Promise.all(actions).then(documents => {
+        Promise.all(actions).then(papers => {
           console.log('to ' + to)
-          console.log(documents)
-          callback(documents)
+          console.log(papers)
+          callback(papers)
         })
       }
     })
   }
 
-  async getDocumentQuotes(doc) {
+  async getPaperQuotes(paper) {
     const { documenterInstance } = this.state
     const blockNumber = await documenterInstance.getDeploymentBlockNumber.call()
-    this.getQuotes(blockNumber, {from: doc.hash}, documents => {
+    this.getQuotes(blockNumber, {from: paper.hash}, papers => {
       this.setState({...this.state,
-        selectedDocumentsFromQuotes: documents,
+        selectedPaperFromQuotes: papers,
       })
     })
-    this.getQuotes(blockNumber, {to: doc.hash}, documents => {
+    this.getQuotes(blockNumber, {to: paper.hash}, papers => {
       this.setState({...this.state,
-        selectedDocumentsToQuotes: documents,
+        selectedPaperToQuotes: papers,
       })
     })
   }
 
   // Field related
 
-  async loadFieldDocuments(field) {
-    // loadDocuments() variation, a watchFieldDocuments method will need to be added as well
+  async loadFieldPapers(field) {
+    // loadPapers() variation, a watchFieldPapers method will need to be added as well
     const { documenterInstance } = this.state
     const blockNumber = await documenterInstance.getDeploymentBlockNumber.call()
-    documenterInstance.LogNewDocument({field: field}, {fromBlock: blockNumber, toBlock: "latest"}).get((error, result) => {
+    documenterInstance.LogNewPaper({field: field}, {fromBlock: blockNumber, toBlock: "latest"}).get((error, result) => {
       if (error) {
         console.log("Nooooo! " + error)
       } else {
         console.log(result)
-        const documents = result.map(x => { return x.args })
-        console.log(documents)
-        this.setState({...this.state, fieldDocuments: documents})
+        const papers = result.map(x => { return x.args })
+        console.log(papers)
+        this.setState({...this.state, fieldPapers: papers})
       }
     })
   }
 
   onFieldChange(field) {
     this.setState({...this.state, selectedField: field})
-    this.loadFieldDocuments(field)
+    this.loadFieldPapers(field)
   }
 
   render() {
@@ -306,12 +306,12 @@ export default class App extends Component {
         <hr/>
         <AddFileForm name={this.state.name} options={this.state.fields} onFileAdd={this.onFileAdd.bind(this)} />
         <hr/>
-        <DocumentList documents={this.state.documents} onRead={this.onRead.bind(this)}/>
+        <PaperList papers={this.state.papers} onRead={this.onRead.bind(this)}/>
         <hr/>
-        <DocumentReader doc={this.state.selectedDocument} from={this.state.selectedDocumentsFromQuotes} to={this.state.selectedDocumentsToQuotes} fields={this.state.fields} web3={this.state.web3} onDownload={this.onDownload.bind(this)}/>
+        <PaperReader paper={this.state.selectedPaper} from={this.state.selectedPaperFromQuotes} to={this.state.selectedPaperToQuotes} fields={this.state.fields} web3={this.state.web3} onDownload={this.onDownload.bind(this)}/>
         <hr/>
         <hr/>
-        <FieldList options={this.state.fields} documents={this.state.fieldDocuments} onFieldChange={this.onFieldChange.bind(this)} />
+        <FieldList options={this.state.fields} papers={this.state.fieldPapers} onFieldChange={this.onFieldChange.bind(this)} />
         </div>
       )
     }

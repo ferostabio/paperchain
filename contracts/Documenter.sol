@@ -6,7 +6,7 @@ import "../node_modules/zeppelin-solidity/contracts/ownership/Ownable.sol";
 
 /**
  * @title Documenter
- * @notice App's main contract, where POE happens and document data is stored
+ * @notice App's main contract, where POE happens and paper data is stored
  */
 contract Documenter is Ownable {
 
@@ -23,39 +23,39 @@ contract Documenter is Ownable {
   mapping (bytes32 => address) private poe;
 
   /**
-   * @dev event for the registration of a new document
+   * @dev event for the registration of a new paper
    * @notice name param should be indexed, but dynamic properties cannot be decoded by web3 if marked this way
    * @notice https://ethereum.stackexchange.com/questions/6840/indexed-event-with-string-not-getting-logged/7170#7170
-   * @param name of the new document
-   * @param field of the new document (indexed)
-   * @param refereed status of the new document
-   * @param quotes of the new document
-   * @param hash of the new document (indexed)
-   * @param multihash of the new document
-   * @param timestamp of the new document
+   * @param name of the new paper
+   * @param field of the new paper (indexed)
+   * @param refereed status of the new paper
+   * @param quotes of the new paper
+   * @param hash of the new paper (indexed)
+   * @param multihash of the new paper
+   * @param timestamp of the new paper
    * @param owner address (indexed)
    */
-  event LogNewDocument(string name, uint indexed field, bool refereed, bytes32[] quotes, bytes32 indexed hash, bytes multihash, uint timestamp, address indexed owner);
+  event LogNewPaper(string name, uint indexed field, bool refereed, bytes32[] quotes, bytes32 indexed hash, bytes multihash, uint timestamp, address indexed owner);
 
   /**
-   * @dev event for a quote made by a new document
-   * @param from hash of the document making the quote (indexed)
-   * @param to hash of the document being quoted (indexed)
+   * @dev event for a quote made by a new paper
+   * @param from hash of the paper making the quote (indexed)
+   * @param to hash of the paper being quoted (indexed)
    */
   event LogQuote(bytes32 indexed from, bytes32 indexed to);
 
   /**
-   * @dev modifier that checks if a document is new
-   * @param _hash of the document
+   * @dev modifier that checks if a paper is new
+   * @param _hash of the paper
    */
-  modifier isNewDocument(bytes32 _hash) {
-    require(!documentExists(_hash));
+  modifier isNewPaper(bytes32 _hash) {
+    require(!paperExists(_hash));
     _;
   }
 
   /**
    * @dev modifier that checks if a field is valid
-   * @param _field of the document
+   * @param _field of the paper
    */
   modifier isFieldValid(uint _field) {
     require(uint(Model.Field.LEPUFOLOGY) >= _field);
@@ -63,12 +63,12 @@ contract Documenter is Ownable {
   }
 
   /**
-   * @dev modifier that checks if a user is the owner of a document
-   * @param _hash of the document
+   * @dev modifier that checks if a user is the owner of a paper
+   * @param _hash of the paper
    * @param _owner address of the user claiming ownership
    */
-  modifier isDocumentOwner(bytes32 _hash, address _owner) {
-    require(documentExists(_hash));
+  modifier isPaperOwner(bytes32 _hash, address _owner) {
+    require(paperExists(_hash));
     require(poe[_hash] == owner);
     _;
   }
@@ -91,23 +91,23 @@ contract Documenter is Ownable {
   }
 
   /**
-   * @dev public function that registers a document
-   * @param _name of the document
-   * @param _field of the document
-   * @param _refereed status of the document
-   * @param _quotes of the document
-   * @param _hash of the document
-   * @param _multihash of the document's IPFS storage
-   * @param _timestamp of the document
+   * @dev public function that registers a paper
+   * @param _name of the paper
+   * @param _field of the paper
+   * @param _refereed status of the paper
+   * @param _quotes of the paper
+   * @param _hash of the paper
+   * @param _multihash of the paper's IPFS storage
+   * @param _timestamp of the paper
    */
-  function notarizeDocument(string _name, uint _field, bool _refereed, bytes32[] _quotes, bytes32 _hash, bytes _multihash, uint _timestamp) public isNewDocument(_hash) isFieldValid(_field) {
+  function registerPaper(string _name, uint _field, bool _refereed, bytes32[] _quotes, bytes32 _hash, bytes _multihash, uint _timestamp) public isNewPaper(_hash) isFieldValid(_field) {
     // Not really sure this is needed or a waste of gas, should probably be done via web3
     for (uint i = 0; i < _quotes.length; i++) {
-      require(documentExists(_quotes[i]));
+      require(paperExists(_quotes[i]));
     }
 
     poe[_hash] = msg.sender;
-    LogNewDocument(_name, _field, _refereed, _quotes, _hash, _multihash, _timestamp, msg.sender);
+    LogNewPaper(_name, _field, _refereed, _quotes, _hash, _multihash, _timestamp, msg.sender);
 
     for (uint j = 0; j < _quotes.length; j++) {
       LogQuote(_hash, _quotes[j]);
@@ -115,11 +115,11 @@ contract Documenter is Ownable {
   }
 
   /**
-   * @dev function that checks if a document already exists
-   * @param _hash of the document
-   * @return a boolean that indicates if the document exists
+   * @dev function that checks if a paper already exists
+   * @param _hash of the paper
+   * @return a boolean that indicates if the paper exists
    */
-  function documentExists(bytes32 _hash) public view returns (bool) {
+  function paperExists(bytes32 _hash) public view returns (bool) {
     return poe[_hash] != address(0);
   }
 }
