@@ -31,6 +31,10 @@ export default class PaperReader extends Component {
         <ul>
           {this.props.to.map((paper, index) => <li key={index}>{paper.name}</li>)}
         </ul>
+        <h5>Peer reviews</h5>
+        <ul>
+          {this.props.reviews.map((review, index) => <li key={index}>{web3.toAscii(review.user)}</li>)}
+        </ul>
         <button onClick={this.onDownloadClicked.bind(this)}>Download</button>
         </div>
       )

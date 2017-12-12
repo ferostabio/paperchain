@@ -55,13 +55,14 @@ contract Authentication is Ownable {
 
   /**
    * @dev modifier that checks if a user can validate a paper
+   * @param _user address
    * @param _hash of the paper
    * @notice only checks that the user hasn't reviewed the paper
    * @notice checking that the paper can be reviewed should be done from web3
    */
-  modifier canReviewPaper(bytes32 _hash) {
-    require(userExists(msg.sender));
-    require(users[msg.sender].reviews[_hash] == false)
+  modifier canReviewPaper(address _user, bytes32 _hash) {
+    require(userExists(_user));
+    require(users[_user].reviews[_hash] == false);
     _;
   }
 
@@ -99,10 +100,11 @@ contract Authentication is Ownable {
   }
 
   /**
-   * @dev function that performs a peer review
+   * @dev function that updates user data during a peer review
+   * @param _user address
    * @param _hash of the paper
    */
-  function reviewPaper(bytes32 _hash) public canReviewPaper(_hash) {
-    users[msg.sender].reviews[_hash] = true;
+  function addReviewToUser(address _user, bytes32 _hash) public canReviewPaper(_user, _hash) {
+    users[_user].reviews[_hash] = true;
   }
 }

@@ -35,7 +35,7 @@ contract Documenter is Ownable {
    * @param timestamp of the new paper
    * @param owner address (indexed)
    */
-  event LogNewPaper(string name, uint indexed field, bool refereed, bytes32[] quotes, bytes32 indexed hash, bytes multihash, uint timestamp, address indexed owner);
+  event LogPaper(string name, uint indexed field, bool refereed, bytes32[] quotes, bytes32 indexed hash, bytes multihash, uint timestamp, address indexed owner);
 
   /**
    * @dev event for a quote made by a new paper
@@ -43,6 +43,13 @@ contract Documenter is Ownable {
    * @param to hash of the paper being quoted (indexed)
    */
   event LogQuote(bytes32 indexed from, bytes32 indexed to);
+
+  /**
+   * @dev event for a peer review
+   * @param user address performing the revieww (indexed)
+   * @param hash of the paper being reviewed (indexed)
+   */
+  event LogReview(address indexed user, bytes32 indexed hash);
 
   /**
    * @dev modifier that checks if a paper is new
@@ -100,14 +107,14 @@ contract Documenter is Ownable {
    * @param _multihash of the paper's IPFS storage
    * @param _timestamp of the paper
    */
-  function registerPaper(string _name, uint _field, bool _refereed, bytes32[] _quotes, bytes32 _hash, bytes _multihash, uint _timestamp) public isNewPaper(_hash) isFieldValid(_field) {
+  function publishPaper(string _name, uint _field, bool _refereed, bytes32[] _quotes, bytes32 _hash, bytes _multihash, uint _timestamp) public isNewPaper(_hash) isFieldValid(_field) {
     // Not really sure this is needed or a waste of gas, should probably be done via web3
     for (uint i = 0; i < _quotes.length; i++) {
       require(paperExists(_quotes[i]));
     }
 
     poe[_hash] = msg.sender;
-    LogNewPaper(_name, _field, _refereed, _quotes, _hash, _multihash, _timestamp, msg.sender);
+    LogPaper(_name, _field, _refereed, _quotes, _hash, _multihash, _timestamp, msg.sender);
 
     for (uint j = 0; j < _quotes.length; j++) {
       LogQuote(_hash, _quotes[j]);
@@ -121,5 +128,15 @@ contract Documenter is Ownable {
    */
   function paperExists(bytes32 _hash) public view returns (bool) {
     return poe[_hash] != address(0);
+  }
+
+  /**
+   * @dev function that performs a peer review
+   * @param _hash of the paper
+   */
+  function reviewPaper(bytes32 _hash) public {
+    require(paperExists(_hash) && poe[_hash] != msg.sender);
+    authentication.addReviewToUser(msg.sender, _hash);
+    LogReview(msg.sender, _hash);
   }
 }

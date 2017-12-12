@@ -8,6 +8,30 @@ export default class FieldList extends Component {
     onFieldChange(index)
   }
 
+  onReviewClicked(index, event) {
+    const paper = this.props.papers[index]
+    const { onReviewClicked } = this.props
+    onReviewClicked(paper)
+  }
+
+  renderReviewStatus(paper, index) {
+    if (paper.owner === this.props.userAddress || paper.field.toNumber() !== this.props.field) {
+      return(<li key={index}>{paper.name}</li>)
+    } else if (this.props.reviews.filter(review => review.hash === paper.hash).length > 0) {
+      return (
+        <li key={index}>{paper.name}
+        <input type="checkbox" disabled="disabled" checked="checked"/>
+        </li>
+      )
+    } else {
+      return (
+        <li key={index}>{paper.name}
+        <button onClick={this.onReviewClicked.bind(this, index)}>Review</button>
+        </li>
+      )
+    }
+  }
+
   render() {
     const papers = this.props.papers
     if (papers !== undefined) {
@@ -24,15 +48,19 @@ export default class FieldList extends Component {
         {this.props.options.map(createItem)}
         </select>
         <ul>
-        {this.props.papers.map((paper, index) => <li key={index}>{paper.name}</li>)}
-        </ul>
-        </div>
-      )
-    } else {
-      return (
-        <div>
-        </div>
-      )
-    }
+        {
+          papers.map((paper, index) =>
+          this.renderReviewStatus(paper, index)
+        )
+      }
+      </ul>
+      </div>
+    )
+  } else {
+    return (
+      <div>
+      </div>
+    )
   }
+}
 }

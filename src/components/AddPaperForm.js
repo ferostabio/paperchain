@@ -14,12 +14,12 @@ export default class AddPaperForm extends Component {
     }
   }
 
-  onFileAdd(event) {
+  onPaperAdd(event) {
     const { refereed, quotes } = this.state
     const file = event.target.files[0]
-    const { onFileAdd } = this.props
+    const { onPaperAdd } = this.props
     const status = refereed === "Refereed"
-    onFileAdd(file, status, quotes)
+    onPaperAdd(file, status, quotes)
   }
 
   onAddClicked(event) {
@@ -48,7 +48,7 @@ export default class AddPaperForm extends Component {
       accept=".txt,.pdf,.doc,.docx"
       placeholder="Please add a document"
       className="inputClass"
-      onChange={this.onFileAdd.bind(this)} />
+      onChange={this.onPaperAdd.bind(this)} />
 
       <select
       onChange={event => this.setState({ refereed: event.target.value })}>

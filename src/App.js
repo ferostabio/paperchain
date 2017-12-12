@@ -18,7 +18,7 @@ import promisify from './utils/promisify'
 
 // Components
 import AuthForm from './components/AuthForm'
-import AddFileForm from './components/AddFileForm'
+import AddPaperForm from './components/AddPaperForm'
 import PaperList from './components/PaperList'
 import PaperReader from './components/PaperReader'
 import FieldList from './components/FieldList'
@@ -30,19 +30,21 @@ export default class App extends Component {
 
     // Set default state
     this.state = {
-      fields: ["Quantum Physics", "Lepufology"], // Taken from Documenter.sol
-      selectedField: 0, // Both this and fieldPapers are just a sample of data analytics
-      fieldPapers: [],
-      papers: [],
-      defaultAccount: undefined,
-      authenticationInstance: undefined,
-      documenterInstance: undefined,
       web3: undefined,
-      user: undefined,
-      storage_started: false,
-      selectedPaper: undefined,
-      selectedPaperFromQuotes: [],
-      selectedPaperToQuotes: []
+      defaultAccount: undefined, // Default eth account
+      authenticationInstance: undefined, // Contract instances
+      documenterInstance: undefined,
+      storage_started: false, // IPFS state
+      user: undefined, // User authentication data
+      papers: [], // User papers
+      reviews: [], // User reviews
+      selectedPaper: undefined, // Currently selected paper
+      fields: ["Quantum Physics", "Lepufology"], // Taken from Documenter.sol
+      selectedField: 0, // Field related
+      fieldPapers: [],
+      selectedPaperFromQuotes: [], // Selected paper quotes
+      selectedPaperToQuotes: [],
+      selectedPaperReviews: [] // Selected paper reviews
     }
   }
 
@@ -50,6 +52,7 @@ export default class App extends Component {
     this.initialize()
     .then(() => {
       this.watchNewPapers()
+      this.watchNewReviews()
     })
   }
 
@@ -92,7 +95,6 @@ export default class App extends Component {
     let result
     try {
       result = await authenticationInstance.login.call({from: defaultAccount})
-      console.log(result)
       const user = {"name": web3.toUtf8(result[0]), "field": result[1].toNumber()}
       this.didLogin(user)
     } catch (error) {
@@ -110,6 +112,7 @@ export default class App extends Component {
       user: user
     })
     this.loadPapers()
+    this.loadReviews()
   }
 
   async onSignupClicked(name, field) {
@@ -120,7 +123,7 @@ export default class App extends Component {
     this.didLogin(user)
   }
 
-  onFileAdd(file, refereed, quotes) {
+  onPaperAdd(file, refereed, quotes) {
     // check if IPFS setup has completed
     if (this.state.storage_started === false) {
       alert("Please wait for IPFS to finish loading")
@@ -148,23 +151,21 @@ export default class App extends Component {
       }
       const multihash = await storage.add(file.name, Buffer.from(binary))
       if (multihash !== undefined) {
-        documenterInstance.registerPaper(file.name, index, refereed, quotes, hash, multihash, Date.now(), { from: defaultAccount })
+        documenterInstance.publishPaper(file.name, index, refereed, quotes, hash, multihash, Date.now(), { from: defaultAccount })
       }
     }
     reader.readAsArrayBuffer(file)
   }
 
   async loadPapers() {
-    console.log("about to load")
     // load user's papers off-storage ;) -had to simplify some things in order to get started this way, but it's worth it
     const { documenterInstance, defaultAccount } = this.state
     const blockNumber = await documenterInstance.getDeploymentBlockNumber.call()
     // filter so only papers created by the user are fetched starting when the contract was deployed are fetched (better than zero)
-    documenterInstance.LogNewPaper({owner: defaultAccount}, {fromBlock: blockNumber, toBlock: "latest"}).get((error, result) => {
+    documenterInstance.LogPaper({owner: defaultAccount}, {fromBlock: blockNumber, toBlock: "latest"}).get((error, result) => {
       if (error) {
         console.log("Nooooo! " + error)
       } else {
-        console.log(result)
         const papers = result.map(x => { return x.args })
         this.setState({...this.state, papers: papers})
       }
@@ -176,7 +177,7 @@ export default class App extends Component {
     const { web3, documenterInstance, defaultAccount } = this.state
     const blockNumber = await promisify(web3.eth.getBlockNumber)
     // filter so only papers created by the user are fetched and starting in the current block
-    documenterInstance.LogNewPaper({owner: defaultAccount}, {fromBlock: blockNumber, toBlock: "latest"}).watch((error, result) => {
+    documenterInstance.LogPaper({owner: defaultAccount}, {fromBlock: blockNumber, toBlock: "latest"}).watch((error, result) => {
       if (error) {
         console.log("Nooooo! " + error)
       } else {
@@ -196,6 +197,7 @@ export default class App extends Component {
       selectedPaperFromQuotes: []
     })
     this.getPaperQuotes(paper)
+    this.getPaperReviews(paper)
   }
 
   async onDownload(paper) {
@@ -215,14 +217,11 @@ export default class App extends Component {
   loadPaper(block, hash) {
     return new Promise((resolve, reject) => {
       const { documenterInstance, defaultAccount } = this.state
-      documenterInstance.LogNewPaper({hash: hash}, {fromBlock: block, toBlock: "latest"}).get((error, result) => {
+      documenterInstance.LogPaper({hash: hash}, {fromBlock: block, toBlock: "latest"}).get((error, result) => {
         if (error) {
           reject(error)
         } else {
-          console.log('result')
-          console.log(result)
           const paper = result.map(x => { return x.args })[0]
-          console.log(paper)
           resolve(paper)
         }
       })
@@ -245,8 +244,6 @@ export default class App extends Component {
           }
         })
         Promise.all(actions).then(papers => {
-          console.log('to ' + to)
-          console.log(papers)
           callback(papers)
         })
       }
@@ -274,13 +271,11 @@ export default class App extends Component {
     // loadPapers() variation, a watchFieldPapers method will need to be added as well
     const { documenterInstance } = this.state
     const blockNumber = await documenterInstance.getDeploymentBlockNumber.call()
-    documenterInstance.LogNewPaper({field: field}, {fromBlock: blockNumber, toBlock: "latest"}).get((error, result) => {
+    documenterInstance.LogPaper({field: field}, {fromBlock: blockNumber, toBlock: "latest"}).get((error, result) => {
       if (error) {
         console.log("Nooooo! " + error)
       } else {
-        console.log(result)
         const papers = result.map(x => { return x.args })
-        console.log(papers)
         this.setState({...this.state, fieldPapers: papers})
       }
     })
@@ -289,6 +284,60 @@ export default class App extends Component {
   onFieldChange(field) {
     this.setState({...this.state, selectedField: field})
     this.loadFieldPapers(field)
+  }
+
+  // Referee
+
+  onReviewClicked(paper) {
+    const { documenterInstance, defaultAccount } = this.state
+    documenterInstance.reviewPaper(paper.hash, { from: defaultAccount })
+  }
+
+  async loadReviews() {
+    const { documenterInstance, defaultAccount } = this.state
+    const blockNumber = await documenterInstance.getDeploymentBlockNumber.call()
+    documenterInstance.LogReview({from: defaultAccount}, {fromBlock: blockNumber, toBlock: "latest"}).get((error, result) => {
+      if (error) {
+        console.log("Nooooo! " + error)
+      } else {
+        console.log(defaultAccount)
+        console.log(result)
+        const reviews = result.map(x => { return x.args })
+        this.setState({...this.state, reviews: reviews})
+      }
+    })
+  }
+
+  async watchNewReviews() {
+    // watch for new reviews made by the user
+    const { web3, documenterInstance, defaultAccount } = this.state
+    const blockNumber = await promisify(web3.eth.getBlockNumber)
+    // filter so only papers created by the user are fetched and starting in the current block
+    documenterInstance.LogReview({from: defaultAccount}, {fromBlock: blockNumber, toBlock: "latest"}).watch((error, result) => {
+      if (error) {
+        console.log("Nooooo! " + error)
+      } else {
+        console.log("Result: " + JSON.stringify(result.args))
+        // just in case: check if the paper hasn't been added already
+        if (this.state.reviews.filter(review => (review.from === result.args.from)).length === 0) {
+          this.setState({...this.state, reviews: [...this.state.reviews, result.args]})
+        }
+      }
+    })
+  }
+
+  async getPaperReviews(paper) {
+    const { web3, documenterInstance } = this.state
+    const blockNumber = await promisify(web3.eth.getBlockNumber)
+    documenterInstance.LogReview({hash: paper.hash}, {fromBlock: blockNumber, toBlock: "latest"}).get((error, result) => {
+      if (error) {
+        console.log("Nooooo! " + error)
+      } else {
+        console.log(result)
+        const reviews = result.map(x => { return x.args })
+        this.setState({...this.state, selectedPaperReviews: reviews})
+      }
+    })
   }
 
   render() {
@@ -303,15 +352,16 @@ export default class App extends Component {
         <div>
         <h1>{"Hi, " + this.state.user.name + "!"}</h1>
         <h3>{"You're a " + this.state.fields[this.state.user.field].slice(0, -1).toLowerCase() + "ist"}</h3>
+        <p>{"You've peer-reviewed  " + this.state.reviews.length + "paper(s)"}</p>
         <hr/>
-        <AddFileForm name={this.state.name} options={this.state.fields} onFileAdd={this.onFileAdd.bind(this)} />
+        <AddPaperForm name={this.state.name} options={this.state.fields} onPaperAdd={this.onPaperAdd.bind(this)} />
         <hr/>
         <PaperList papers={this.state.papers} onRead={this.onRead.bind(this)}/>
         <hr/>
-        <PaperReader paper={this.state.selectedPaper} from={this.state.selectedPaperFromQuotes} to={this.state.selectedPaperToQuotes} fields={this.state.fields} web3={this.state.web3} onDownload={this.onDownload.bind(this)}/>
+        <PaperReader paper={this.state.selectedPaper} from={this.state.selectedPaperFromQuotes} to={this.state.selectedPaperToQuotes} reviews={this.state.selectedPaperReviews} fields={this.state.fields} web3={this.state.web3} onDownload={this.onDownload.bind(this)}/>
         <hr/>
         <hr/>
-        <FieldList options={this.state.fields} papers={this.state.fieldPapers} onFieldChange={this.onFieldChange.bind(this)} />
+        <FieldList options={this.state.fields} papers={this.state.fieldPapers} reviews={this.state.reviews} userAddress={this.state.defaultAccount} field={this.state.user.field} onFieldChange={this.onFieldChange.bind(this)} onReviewClicked={this.onReviewClicked.bind(this)} />
         </div>
       )
     }
