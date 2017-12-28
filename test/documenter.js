@@ -50,6 +50,7 @@ contract("Documenter", accounts => {
   const defaultField = 1
   const defaultRefereedStatus = true
   const now = Date.now()
+  const defaultError = /revert/
   let notarize = false // Variable set to false each time i need beforeEach not to notarize a paper
 
   beforeEach(async () =>  {
@@ -90,7 +91,7 @@ contract("Documenter", accounts => {
       await documenter.publishPaper(testFileName, defaultField, defaultRefereedStatus, [], fileHash, testFileStorageHash, Date.now(), defaultTx)
       assert(false, "User added an existing paper")
     } catch (error) {
-      assert.match(error.message, /invalid opcode/, defaultErrorMessage)
+      assert.match(error.message, defaultError, defaultErrorMessage)
     }
     notarize = false
   })
@@ -100,7 +101,7 @@ contract("Documenter", accounts => {
       await documenter.publishPaper(testFileName, 2, defaultRefereedStatus, [], fileHash, testFileStorageHash, Date.now(), defaultTx)
       assert(false, "User added a paper with invalid field")
     } catch (error) {
-      assert.match(error.message, /invalid opcode/, defaultErrorMessage)
+      assert.match(error.message, defaultError, defaultErrorMessage)
     }
     notarize = false
   })
@@ -110,7 +111,7 @@ contract("Documenter", accounts => {
       await documenter.publishPaper(testFileName, defaultField, defaultRefereedStatus, ["meesa_not_exists"], fileHash, testFileStorageHash, Date.now(), defaultTx)
       assert(false, "User added a paper with not existing quote")
     } catch (error) {
-      assert.match(error.message, /invalid opcode/, defaultErrorMessage)
+      assert.match(error.message, defaultError, defaultErrorMessage)
     }
     notarize = false
   })

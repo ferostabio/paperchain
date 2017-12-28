@@ -19,6 +19,7 @@ contract("Authentication", accounts => {
   const defaultAccount = accounts[0]
   const otherAccount = accounts[1]
   const defaultField = 0
+  const defaultError = /revert/
 
   it("should sign up and log in a user.", async () => {
     username = "testuser"
@@ -33,7 +34,7 @@ contract("Authentication", accounts => {
       await authentication.login.call({from: otherAccount})
       assert(false, "Non existing user was able to login")
     } catch (error) {
-      assert.match(error.message, /invalid opcode/, "Call failed but for who knows why")
+      assert.match(error.message, defaultError, "Call failed but for who knows why")
     }
   })
 
@@ -42,7 +43,7 @@ contract("Authentication", accounts => {
       await authentication.signup("", defaultField, {from: otherAccount})
       assert(false, "User was able to sign up with empty name")
     } catch (error) {
-      assert.match(error.message, /invalid opcode/, "Call failed but for who knows why")
+      assert.match(error.message, defaultError, "Call failed but for who knows why")
     }
   })
 
@@ -51,7 +52,7 @@ contract("Authentication", accounts => {
       await authentication.signup("Vitalik", 2, {from: otherAccount})
       assert(false, "User was able to sign up with invalid field")
     } catch (error) {
-      assert.match(error.message, /invalid opcode/, "Call failed but for who knows why")
+      assert.match(error.message, defaultError, "Call failed but for who knows why")
     }
   })
 
