@@ -1,5 +1,9 @@
 /* PAGE */
 
+:root {
+  --color: #659797;
+}
+
 body,
 .pure-g [class*=pure-u] {
   font-family: 'Open Sans', sans-serif;
@@ -23,11 +27,11 @@ code {
 }
 
 .pure-button-primary {
-  background-color: #0c1a2b;
+  background-color: var(--color);
 }
 
 .pure-button-primary:hover {
-  background-color: #233e5e;
+  background-color: #000;
 }
 
 .pure-form input[type="text"]:focus {
@@ -39,7 +43,7 @@ code {
 .navbar {
   position: fixed;
   padding: 5px;
-  background: #0c1a2b;
+  background: var(--color);
   font-family: 'Oswald', 'Arial Narrow', sans-serif;
 }
 
@@ -50,7 +54,8 @@ code {
 .navbar a:active,
 .navbar a:focus,
 .navbar a:hover {
-  background: #233e5e;
+  background: #fff;
+  color: var(--color);
 }
 
 .navbar .pure-menu-heading {
