@@ -151,7 +151,7 @@ export default class App extends Component {
       }
       const multihash = await storage.add(file.name, Buffer.from(binary))
       if (multihash !== undefined) {
-        documenterInstance.publishPaper(file.name, index, refereed, quotes, hash, multihash, Date.now(), { from: defaultAccount })
+        documenterInstance.publishPaper(file.name, index, refereed, quotes, "", hash, multihash, Date.now(), { from: defaultAccount })
       }
     }
     reader.readAsArrayBuffer(file)
