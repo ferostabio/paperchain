@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-const fields = require('../../../constants').Fields
+const fields = require('../../constants').Fields
 
 class SignUpForm extends Component {
   constructor(props) {
@@ -16,6 +16,8 @@ class SignUpForm extends Component {
   }
 
   handleSubmit(event) {
+    event.preventDefault()
+
     if (this.state.name.length < 2) {
       return alert('Please fill in your name.')
     }

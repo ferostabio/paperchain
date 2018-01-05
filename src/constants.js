@@ -1,5 +1,7 @@
 const Fields = ['Quantum Physics', 'Lepufology']
+const RefereedOptions = ["Refereed", "Non-refereed"]
 
 module.exports = {
-    Fields: Fields
+    Fields: Fields,
+    RefereedOptions: RefereedOptions
 }

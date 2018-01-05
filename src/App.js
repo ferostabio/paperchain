@@ -3,8 +3,8 @@ import { Link } from 'react-router'
 import { HiddenOnlyAuth, VisibleOnlyAuth } from './util/wrappers.js'
 
 // UI Components
-import LoginButtonContainer from './user/ui/loginbutton/LoginButtonContainer'
-import LogoutButtonContainer from './user/ui/logoutbutton/LogoutButtonContainer'
+import LoginButtonContainer from './components/loginbutton/LoginButtonContainer'
+import LogoutButtonContainer from './components/logoutbutton/LogoutButtonContainer'
 
 // Styles
 import './css/oswald.css'
@@ -20,7 +20,7 @@ class App extends Component {
           <Link to="/dashboard" className="pure-menu-link">Dashboard</Link>
         </li>
         <li className="pure-menu-item">
-          <Link to="/profile" className="pure-menu-link">Profile</Link>
+          <Link to="/add" className="pure-menu-link">Add</Link>
         </li>
         <LogoutButtonContainer />
       </span>

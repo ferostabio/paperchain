@@ -4,14 +4,17 @@ import { Router, Route, IndexRoute, browserHistory } from 'react-router'
 import { Provider } from 'react-redux'
 import { syncHistoryWithStore } from 'react-router-redux'
 import { UserIsAuthenticated, UserIsNotAuthenticated } from './util/wrappers.js'
-import getWeb3 from './util/web3/getWeb3'
+import getPaperchain from './util/getPaperchain'
 
 // Layouts
 import App from './App'
-import Home from './layouts/home/Home'
-import Dashboard from './layouts/dashboard/Dashboard'
-import SignUp from './user/layouts/signup/SignUp'
-import Profile from './user/layouts/profile/Profile'
+import Home from './layouts/Home'
+import Dashboard from './layouts/Dashboard'
+import SignUp from './layouts/SignUp'
+import Add from './layouts/Add'
+
+// Storage
+import getStorage from './util/getStorage'
 
 // Redux Store
 import store from './store'
@@ -19,13 +22,16 @@ import store from './store'
 // Initialize react-router-redux.
 const history = syncHistoryWithStore(browserHistory, store)
 
-// Initialize web3 and set in Redux.
-getWeb3
-.then(results => {
+// Initialize paperchain and set in Redux.
+getPaperchain
+.then(result => {
   console.log('Web3 initialized!')
 })
-.catch(() => {
-  console.log('Error in web3 initialization.')
+
+// Initialize storge and set in Redux.
+getStorage.
+then(storage => {
+  console.log('IPFS initialized!')
 })
 
 ReactDOM.render((
@@ -35,7 +41,7 @@ ReactDOM.render((
           <IndexRoute component={Home} />
           <Route path="dashboard" component={UserIsAuthenticated(Dashboard)} />
           <Route path="signup" component={UserIsNotAuthenticated(SignUp)} />
-          <Route path="profile" component={UserIsAuthenticated(Profile)} />
+          <Route path="add" component={UserIsAuthenticated(Add)} />
         </Route>
       </Router>
     </Provider>

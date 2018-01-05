@@ -1,17 +1,14 @@
-import AuthenticationContract from '../../../../build/contracts/Authentication.json'
-import store from '../../../store'
+import store from '../../store'
+import paperchain from '../../paperchain'
 
-const contract = require('truffle-contract')
-
-export const USER_UPDATED = 'USER_UPDATED'
-function userUpdated(user) {
-  return {
-    type: USER_UPDATED,
-    payload: user
+export function addPaper(file, refereed, description, quotes) {
+  const { storage } = store.getState().storage
+  if (storage === null) {
+    return alert('There seems to be a problem with IPFS, please try again later')
   }
-}
 
-export function updateUser(name) {
+  console.log(file)
+  /*
   let web3 = store.getState().web3.web3Instance
 
   // Double-check web3's status.
@@ -23,7 +20,7 @@ export function updateUser(name) {
       authentication.setProvider(web3.currentProvider)
 
       // Declaring this for later so we can chain functions on Authentication.
-      var authenticationInstance
+      let authenticationInstance
 
       // Get current ethereum wallet.
       web3.eth.getCoinbase((error, coinbase) => {
@@ -52,5 +49,5 @@ export function updateUser(name) {
     }
   } else {
     console.error('Web3 is not initialized.');
-  }
+  }*/
 }
