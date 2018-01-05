@@ -30,12 +30,13 @@ contract Documenter is Ownable {
    * @param field of the new paper (indexed)
    * @param refereed status of the new paper
    * @param quotes of the new paper
+   * @param description of the new paper
    * @param hash of the new paper (indexed)
    * @param multihash of the new paper
    * @param timestamp of the new paper
    * @param owner address (indexed)
    */
-  event LogPaper(string name, uint indexed field, bool refereed, bytes32[] quotes, bytes32 indexed hash, bytes multihash, uint timestamp, address indexed owner);
+  event LogPaper(string name, uint indexed field, bool refereed, bytes32[] quotes, string description, bytes32 indexed hash, bytes multihash, uint timestamp, address indexed owner);
 
   /**
    * @dev event for a quote made by a new paper
@@ -103,18 +104,19 @@ contract Documenter is Ownable {
    * @param _field of the paper
    * @param _refereed status of the paper
    * @param _quotes of the paper
+   * @param _description of the paper
    * @param _hash of the paper
    * @param _multihash of the paper's IPFS storage
    * @param _timestamp of the paper
    */
-  function publishPaper(string _name, uint _field, bool _refereed, bytes32[] _quotes, bytes32 _hash, bytes _multihash, uint _timestamp) public isNewPaper(_hash) isFieldValid(_field) {
+  function publishPaper(string _name, uint _field, bool _refereed, bytes32[] _quotes, string _description, bytes32 _hash, bytes _multihash, uint _timestamp) public isNewPaper(_hash) isFieldValid(_field) {
     // Not really sure this is needed or a waste of gas, should probably be done via web3
     for (uint i = 0; i < _quotes.length; i++) {
       require(paperExists(_quotes[i]));
     }
 
     poe[_hash] = msg.sender;
-    LogPaper(_name, _field, _refereed, _quotes, _hash, _multihash, _timestamp, msg.sender);
+    LogPaper(_name, _field, _refereed, _quotes, _description, _hash, _multihash, _timestamp, msg.sender);
 
     for (uint j = 0; j < _quotes.length; j++) {
       LogQuote(_hash, _quotes[j]);

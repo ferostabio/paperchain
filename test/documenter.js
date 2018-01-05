@@ -18,7 +18,7 @@ function watchPapers(documenter, account, currentBlock, name, field, refereed, h
       resolve(error)
       event.stopWatching()
     })
-    documenter.publishPaper(name, field, refereed, [], hash, testFileStorageHash, Date.now(), { from: account})
+    documenter.publishPaper(name, field, refereed, [], "paper description", hash, testFileStorageHash, Date.now(), { from: account})
   })
 }
 
@@ -49,6 +49,7 @@ contract("Documenter", accounts => {
   const defaultTx = { from: defaultAccount }
   const defaultField = 1
   const defaultRefereedStatus = true
+  const defaultDescription = "Paper description"
   const now = Date.now()
   const defaultError = /revert/
   let notarize = false // Variable set to false each time i need beforeEach not to notarize a paper
@@ -58,7 +59,7 @@ contract("Documenter", accounts => {
     await authentication.signup('user', 0, defaultTx)
     documenter = await Documenter.new(authentication.address)
     if (notarize) {
-      await documenter.publishPaper(testFileName, defaultField, defaultRefereedStatus, [], fileHash, testFileStorageHash, now, defaultTx)
+      await documenter.publishPaper(testFileName, defaultField, defaultRefereedStatus, [], defaultDescription, fileHash, testFileStorageHash, now, defaultTx)
     }
   })
 
@@ -67,7 +68,7 @@ contract("Documenter", accounts => {
     let exists = await documenter.paperExists.call(fileHash)
     assert.isNotOk(exists, "Hash already exists")
 
-    await documenter.publishPaper(testFileName, defaultField, defaultRefereedStatus, [], fileHash, testFileStorageHash, now, defaultTx)
+    await documenter.publishPaper(testFileName, defaultField, defaultRefereedStatus, [], "", fileHash, testFileStorageHash, now, defaultTx)
     exists = await documenter.paperExists.call(fileHash)
     assert.isOk(exists, "Didn't add hash")
     notarize = true
@@ -79,6 +80,7 @@ contract("Documenter", accounts => {
     const data = result[0].args
 
     assert.equal(data.name, testFileName, "Wrong file name")
+    assert.equal(data.description, defaultDescription, "Wrong paper description")
     assert.equal(data.field.toNumber(), 1, "Wrong file field")
     assert.equal(web3.toAscii(data.hash), fileHash, "Paper hash different")
     assert.equal(web3.toAscii(data.multihash), testFileStorageHash, "Storage hash different")
@@ -88,7 +90,7 @@ contract("Documenter", accounts => {
 
   it("a user shouldn't be able to add an existing paper", async () => {
     try {
-      await documenter.publishPaper(testFileName, defaultField, defaultRefereedStatus, [], fileHash, testFileStorageHash, Date.now(), defaultTx)
+      await documenter.publishPaper(testFileName, defaultField, defaultRefereedStatus, [], "", fileHash, testFileStorageHash, Date.now(), defaultTx)
       assert(false, "User added an existing paper")
     } catch (error) {
       assert.match(error.message, defaultError, defaultErrorMessage)
@@ -98,7 +100,7 @@ contract("Documenter", accounts => {
 
   it("a user shouldn't be able to notarize a paper with an invalid field", async () => {
     try {
-      await documenter.publishPaper(testFileName, 2, defaultRefereedStatus, [], fileHash, testFileStorageHash, Date.now(), defaultTx)
+      await documenter.publishPaper(testFileName, 2, defaultRefereedStatus, [], "", fileHash, testFileStorageHash, Date.now(), defaultTx)
       assert(false, "User added a paper with invalid field")
     } catch (error) {
       assert.match(error.message, defaultError, defaultErrorMessage)
@@ -108,7 +110,7 @@ contract("Documenter", accounts => {
 
   it("shouldn't notarize a paper with a not existing quote", async () => {
     try {
-      await documenter.publishPaper(testFileName, defaultField, defaultRefereedStatus, ["meesa_not_exists"], fileHash, testFileStorageHash, Date.now(), defaultTx)
+      await documenter.publishPaper(testFileName, defaultField, defaultRefereedStatus, ["meesa_not_exists"], null, fileHash, testFileStorageHash, Date.now(), defaultTx)
       assert(false, "User added a paper with not existing quote")
     } catch (error) {
       assert.match(error.message, defaultError, defaultErrorMessage)
