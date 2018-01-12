@@ -12,6 +12,12 @@ let watchPapersEvent
 let watchFieldPapersEvent
 let watchReviewsEvent
 
+/*
+ * Some notes on paperchain.js
+ * First, this thing should be detached from redux.
+ * Second, this functions should be used in the smart contract testing classes
+ */
+
 function login() {
   return new Promise(async (resolve, reject) => {
     const web3 = store.getState().web3.instance
@@ -78,6 +84,7 @@ async function watchPapers() {
 }
 
 function stopWatchingPapers() {
+  // can probably be simpler
   if (this.watchPapersEvent !== undefined) {
     this.watchPapersEvent.stopWatching()
     this.watchPapersEvent = undefined
@@ -93,10 +100,7 @@ function getFieldPapers() {
       if (error) {
         reject(error)
       } else {
-        console.log(account)
         const papers = result.map(x => { return x.args }).filter(paper => (paper.owner !== account))
-        //console.log(papers[3].owner)
-
         const payload = { type: GOT_FIELD_PAPERS, papers: papers }
         resolve(store.dispatch(payload))
       }
@@ -119,10 +123,8 @@ async function watchFieldPapers() {
         reject(error)
       } else {
         const paper = result.args
-        console.log(paper)
         if (paper.owner !== account) {
           const payload = { type: UPDATED_FIELD_PAPERS, paper: paper }
-          console.log(payload)
           resolve(store.dispatch(payload))
         }
       }
@@ -192,7 +194,6 @@ function getReviews(paper) {
       if (error) {
         reject(error)
       } else {
-        console.log(result)
         const reviews = result.map(x => { return x.args })
         const payload = { type: GOT_REVIEWS, reviews: reviews }
         resolve(store.dispatch(payload))
@@ -213,7 +214,6 @@ function watchReviews(paper) {
       if (error) {
         reject(error)
       } else {
-        console.log('Result: ' + JSON.stringify(result.args))
         const review = result.args
         const payload = { type: UPDATED_REVIEWS, review: review }
         resolve(store.dispatch(payload))
@@ -247,9 +247,13 @@ function addPaper(file, refereed, description, quotes) {
         if (!exists) {
           const multihash = await storage.add(file.name, Buffer.from(binary))
           if (multihash !== undefined) {
-            await documenter.publishPaper(file.name, field, refereed, quotes, description, hash, multihash, Date.now(), { from: account })
-            // I don't think we need to store anything at the moment
-            resolve()
+            try {
+              await documenter.publishPaper(file.name, field, refereed, quotes, description, hash, multihash, Date.now(), { from: account })
+              // I don't think we need to store anything at the moment
+              resolve()
+            } catch(error) {
+              reject(error)
+            }
           } else {
             reject(new Error('There was a problem uploading the document'))
           }
@@ -267,9 +271,13 @@ function addPaper(file, refereed, description, quotes) {
 function reviewPaper(paper) {
   return new Promise(async (resolve, reject) => {
     const { documenter, account } = store.getState().paperchain
-    await documenter.reviewPaper(paper.hash, { from: account })
-    // Same as above, nothing to notify the store
-    resolve()
+    try {
+      await documenter.reviewPaper(paper.hash, { from: account })
+      // Same as above, nothing to notify the store
+      resolve()
+    } catch (error) {
+      reject(error)
+    }
   })
 }
 

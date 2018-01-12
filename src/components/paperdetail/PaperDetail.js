@@ -31,10 +31,6 @@ class PaperDetail extends Component {
 
     const isOwnPaper = paper.owner === account
     const alreadyReviewed = reviews.filter(review => review.hash === paper.hash).length > 0
-    console.log(account)
-    console.log(paper.owner)
-    console.log(reviews)
-    console.log(isOwnPaper)
     return(
       <div>
       <p>{'Field: ' + fields[paper.field.toNumber()]}</p>

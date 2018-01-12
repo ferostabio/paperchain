@@ -10,8 +10,6 @@ class PaperList extends Component {
 
   render() {
     const { isOwnPaper, alreadyReviewed } = this.props
-    console.log(isOwnPaper)
-    console.log(alreadyReviewed)
     if (isOwnPaper) {
       return(null)
     } else if (alreadyReviewed) {

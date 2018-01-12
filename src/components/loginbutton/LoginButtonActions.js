@@ -7,7 +7,6 @@ export function loginUser() {
       // Used a manual redirect here as opposed to a wrapper.
       // This way, once logged in a user can still access the home page.
       const currentLocation = browserHistory.getCurrentLocation()
-      console.log("")
       if ('redirect' in currentLocation.query) {
         return browserHistory.push(decodeURIComponent(currentLocation.query.redirect))
       }
