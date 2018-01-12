@@ -110,7 +110,7 @@ contract('Documenter', accounts => {
 
   it('shouldn\'t notarize a paper with a not existing quote', async () => {
     try {
-      await documenter.publishPaper(testFileName, defaultField, defaultRefereedStatus, ['meesa_not_exists'], null, fileHash, testFileStorageHash, Date.now(), defaultTx)
+      await documenter.publishPaper(testFileName, defaultField, defaultRefereedStatus, ['meesa_not_exists'], '', fileHash, testFileStorageHash, Date.now(), defaultTx)
       assert(false, 'User added a paper with not existing quote')
     } catch (error) {
       assert.match(error.message, defaultError, defaultErrorMessage)

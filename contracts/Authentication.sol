@@ -20,10 +20,10 @@ contract Authentication is Ownable {
   /**
    * @dev event for a user signup
    * @param name of the user
-   * @param field of the user
-   * @param user address
+   * @param field of the user (indexed)
+   * @param user address (indexed)
    */
-  event LogSignup(bytes name, uint field, address user);
+  event LogSignup(bytes name, uint indexed field, address indexed user);
 
   /**
    * @dev modifier that checks if a user exists

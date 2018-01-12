@@ -2,12 +2,22 @@ const Authentication = artifacts.require('./Authentication.sol')
 
 function watchSignup(authentication, account, currentBlock, name, field) {
   return new Promise((resolve, reject) => {
-    var event = authentication.LogSignup({user: account}, {fromBlock: currentBlock, toBlock: 'latest'})
+    const event = authentication.LogSignup({user: account}, {fromBlock: currentBlock, toBlock: 'latest'})
     event.watch((error, result) => {
       resolve(error)
       event.stopWatching()
     })
     authentication.signup(name, field, {from: account})
+  })
+}
+
+function getSignup(authentication, account) {
+  return new Promise((resolve, reject) => {
+    const event = authentication.LogSignup({user: account})
+    event.get((error, result) => {
+      resolve(result)
+      event.stopWatching()
+    })
   })
 }
 
@@ -24,7 +34,9 @@ contract('Authentication', accounts => {
   it('should sign up and log in a user.', async () => {
     username = 'testuser'
     await authentication.signup(username, defaultField, {from: defaultAccount})
-    var result = await authentication.login.call()
+    const event = await getSignup(authentication, defaultAccount)
+    assert.equal(web3.toUtf8(event[0].args.name), username, 'The user was not signed up')
+    const result = await authentication.login.call()
     assert.equal(web3.toUtf8(result[0]), username, 'The user was not signed up')
     assert.equal(result[1].toNumber(), defaultField, 'The user was not signed up')
   })
@@ -57,7 +69,7 @@ contract('Authentication', accounts => {
   })
 
   it('should fire an event when a user signs up', async () => {
-    var error = await watchSignup(authentication, otherAccount, web3.eth.blockNumber, 'Vitalik', defaultField)
+    const error = await watchSignup(authentication, otherAccount, web3.eth.blockNumber, 'Vitalik', defaultField)
     assert.equal(error, null, 'Watcher returned error')
   })
 })
