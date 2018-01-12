@@ -1,7 +1,7 @@
-import store from '../../store'
+import store from '../../../store'
 import Web3 from 'web3'
 
-import { WEB3_INITIALIZED } from './web3Reducer'
+import { WEB3_INITIALIZED } from '../web3Reducer'
 
 function web3Initialized(web3) {
   return {
@@ -10,9 +10,9 @@ function web3Initialized(web3) {
   }
 }
 
-let getWeb3 = new Promise(function(resolve, reject) {
+let getWeb3 = new Promise((resolve, reject) => {
   // Wait for loading completion to avoid race conditions with web3 injection timing.
-  window.addEventListener('load', function(dispatch) {
+  window.addEventListener('load', dispatch => {
     let results
     let web3 = window.web3
     // Checking if Web3 has been injected by the browser (Mist/MetaMask)

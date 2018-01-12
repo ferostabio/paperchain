@@ -1,5 +1,5 @@
 import { loginUser } from '../loginbutton/LoginButtonActions'
-import paperchain from '../../paperchain'
+import paperchain from '../../util/paperchain'
 
 export function signUpUser(name, field) {
   return dispatch => {

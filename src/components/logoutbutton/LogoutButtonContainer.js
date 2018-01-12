@@ -6,7 +6,7 @@ const mapStateToProps = (state, ownProps) => {
   return {}
 }
 
-const mapDispatchToProps = (dispatch) => {
+const mapDispatchToProps = dispatch => {
   return {
     onLogoutUserClick: (event) => {
       event.preventDefault()

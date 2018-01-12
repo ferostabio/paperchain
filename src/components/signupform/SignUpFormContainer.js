@@ -6,7 +6,7 @@ const mapStateToProps = (state, ownProps) => {
   return {}
 }
 
-const mapDispatchToProps = (dispatch) => {
+const mapDispatchToProps = dispatch => {
   return {
     onSignUpFormSubmit: (name, field) => {
       dispatch(signUpUser(name, field))

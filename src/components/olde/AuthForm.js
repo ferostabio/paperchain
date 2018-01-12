@@ -7,8 +7,8 @@ export default class AuthForm extends Component {
   constructor(props) {
     super(props)
     this.state = {
-      selected: "Quantum Physics",
-      text: "",
+      selected: 'Quantum Physics',
+      text: '',
     }
   }
 
@@ -30,7 +30,7 @@ export default class AuthForm extends Component {
       <h1>Paperchain</h1>
       <h3>Please enter your name and field</h3>
 
-      <input type="text" value={this.state.text} onChange={event => this.setState({ text: event.target.value })}/>
+      <input type='text' value={this.state.text} onChange={event => this.setState({ text: event.target.value })}/>
       <button onClick={this.onSignupClicked.bind(this)}>Sign Up</button>
 
       <p>Field:

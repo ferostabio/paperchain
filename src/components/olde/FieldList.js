@@ -20,7 +20,7 @@ export default class FieldList extends Component {
     } else if (this.props.reviews.filter(review => review.hash === paper.hash).length > 0) {
       return (
         <li key={index}>{paper.name}
-        <input type="checkbox" disabled="disabled" checked="checked"/>
+        <input type='checkbox' disabled='disabled' checked='checked'/>
         </li>
       )
     } else {

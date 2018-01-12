@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-const fields = require('../../constants').Fields
+const fields = require('../../util/constants').Fields
 
 class SignUpForm extends Component {
   constructor(props) {
@@ -33,21 +33,21 @@ class SignUpForm extends Component {
     {item}
     </option>
     return(
-      <form className="pure-form pure-form-stacked" onSubmit={this.handleSubmit.bind(this)}>
+      <form className='pure-form pure-form-stacked' onSubmit={this.handleSubmit.bind(this)}>
         <fieldset>
-          <label htmlFor="name">Name</label>
-          <input id="name" type="text" value={this.state.name} onChange={this.onInputChange.bind(this)} placeholder="Name" />
+          <label htmlFor='name'>Name</label>
+          <input id='name' type='text' value={this.state.name} onChange={this.onInputChange.bind(this)} placeholder='Name' />
 
           <select
           onChange={event => this.setState({ selected: event.target.value })}>
           {fields.map(createItem)}
           </select>
 
-          <span className="pure-form-message">All fields are required.</span>
+          <span className='pure-form-message'>All fields are required.</span>
 
           <br />
 
-          <button type="submit" className="pure-button pure-button-primary">Sign Up</button>
+          <button type='submit' className='pure-button pure-button-primary'>Sign Up</button>
         </fieldset>
       </form>
     )

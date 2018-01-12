@@ -1,20 +1,21 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
+import React from 'react'
+import ReactDOM from 'react-dom'
 import { Router, Route, IndexRoute, browserHistory } from 'react-router'
 import { Provider } from 'react-redux'
 import { syncHistoryWithStore } from 'react-router-redux'
-import { UserIsAuthenticated, UserIsNotAuthenticated } from './util/wrappers.js'
-import getPaperchain from './util/getPaperchain'
+import { UserIsAuthenticated, UserIsNotAuthenticated } from './util/helpers/wrappers.js'
+import getPaperchain from './util/reducers/getters/getPaperchain'
 
 // Layouts
 import App from './App'
 import Home from './layouts/Home'
 import Dashboard from './layouts/Dashboard'
+import Paper from './layouts/Paper'
 import SignUp from './layouts/SignUp'
 import Add from './layouts/Add'
 
 // Storage
-import getStorage from './util/getStorage'
+import getStorage from './util/reducers/getters/getStorage'
 
 // Redux Store
 import store from './store'
@@ -37,11 +38,12 @@ then(storage => {
 ReactDOM.render((
     <Provider store={store}>
       <Router history={history}>
-        <Route path="/" component={App}>
+        <Route path='/' component={App}>
           <IndexRoute component={Home} />
-          <Route path="dashboard" component={UserIsAuthenticated(Dashboard)} />
-          <Route path="signup" component={UserIsNotAuthenticated(SignUp)} />
-          <Route path="add" component={UserIsAuthenticated(Add)} />
+          <Route path='dashboard' component={UserIsAuthenticated(Dashboard)} />
+          <Route path='signup' component={UserIsNotAuthenticated(SignUp)} />
+          <Route path='add' component={UserIsAuthenticated(Add)} />
+          <Route path='paper' component={UserIsAuthenticated(Paper)} />
         </Route>
       </Router>
     </Provider>

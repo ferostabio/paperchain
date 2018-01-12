@@ -1,13 +1,13 @@
 import Contract from 'truffle-contract'
 
-import Authentication from '../../build/contracts/Authentication.json'
-import Documenter from '../../build/contracts/Documenter.json'
+import Authentication from '../../../../build/contracts/Authentication.json'
+import Documenter from '../../../../build/contracts/Documenter.json'
 
-import store from '../store'
-import promisify from './promisify'
-import { PAPERCHAIN_INITIALIZED } from './paperchainReducer'
+import store from '../../../store'
+import promisify from '../../helpers/promisify'
+import { PAPERCHAIN_INITIALIZED } from '../paperchainReducer'
 
-import getWeb3 from './web3/getWeb3'
+import getWeb3 from './getWeb3'
 
 let getPaperchain = new Promise(async (resolve, reject) => {
   const result = await getWeb3
@@ -24,11 +24,14 @@ let getPaperchain = new Promise(async (resolve, reject) => {
     const authenticationInstance = await authentication.deployed()
     const documenterInstance = await documenter.deployed()
 
+    const deploymentBlock = await documenterInstance.getDeploymentBlockNumber.call()
+
     resolve(store.dispatch({
       type: PAPERCHAIN_INITIALIZED,
       account: defaultAccount,
       authentication: authenticationInstance,
-      documenter: documenterInstance
+      documenter: documenterInstance,
+      deploymentBlock: deploymentBlock
     }))
   } else {
     console.error('Web3 is not initialized.')

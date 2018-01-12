@@ -7,9 +7,9 @@ export default class AddPaperForm extends Component {
   constructor(props) {
     super(props)
     this.state = {
-      options: ["Refereed", "Non-refereed"],
-      refereed: "Refereed",
-      text: "",
+      options: ['Refereed', 'Non-refereed'],
+      refereed: 'Refereed',
+      text: '',
       quotes: []
     }
   }
@@ -18,7 +18,7 @@ export default class AddPaperForm extends Component {
     const { refereed, quotes } = this.state
     const file = event.target.files[0]
     const { onPaperAdd } = this.props
-    const status = refereed === "Refereed"
+    const status = refereed === 'Refereed'
     onPaperAdd(file, status, quotes)
   }
 
@@ -26,7 +26,7 @@ export default class AddPaperForm extends Component {
     const text = this.state.text
     this.setState({...this.state,
       quotes: [...this.state.quotes, text],
-      text: ""
+      text: ''
     })
   }
 
@@ -44,10 +44,10 @@ export default class AddPaperForm extends Component {
     return (
       <div>
 
-      <FileInput name="documentUploader"
-      accept=".txt,.pdf,.doc,.docx"
-      placeholder="Please add a document"
-      className="inputClass"
+      <FileInput name='documentUploader'
+      accept='.txt,.pdf,.doc,.docx'
+      placeholder='Please add a document'
+      className='inputClass'
       onChange={this.onPaperAdd.bind(this)} />
 
       <select
@@ -55,7 +55,7 @@ export default class AddPaperForm extends Component {
       {this.state.options.map(createItem)}
       </select>
 
-      <input type="text" value={this.state.text} onChange={event => this.setState({ text: event.target.value })}/>
+      <input type='text' value={this.state.text} onChange={event => this.setState({ text: event.target.value })}/>
       <button onClick={this.onAddClicked.bind(this)}>Quote</button>
 
       <ul>

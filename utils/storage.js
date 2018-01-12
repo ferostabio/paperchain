@@ -1,5 +1,5 @@
-const IPFS = require("ipfs")
-const fs = require("./file")
+const IPFS = require('ipfs')
+const fs = require('./file')
 
 // IPFS proxy: as basic as it gets, currently. Almost no error handling, etc
 class Storage {
@@ -9,7 +9,7 @@ class Storage {
     this.path = path
     return new Promise((resolve, reject) => {
       this.node = new IPFS({ repo:  path})
-      this.node.once("ready", () => {
+      this.node.once('ready', () => {
         resolve()
       })
     })
@@ -54,7 +54,7 @@ class Storage {
         if (err) {
           reject(undefined)
         } else {
-          stream.on("data", file => {
+          stream.on('data', file => {
             resolve(file)
           })
         }

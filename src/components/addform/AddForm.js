@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 const FileInput = require('react-file-input')
-const options = require('../../constants').RefereedOptions
+const options = require('../../util/constants').RefereedOptions
 
 class AddForm extends Component {
   constructor(props) {
@@ -9,9 +9,9 @@ class AddForm extends Component {
     this.state = {
       file: null,
       refereed: options[0],
-      quoteText: "",
+      quoteText: '',
       quotes: [],
-      description: ""
+      description: ''
     }
   }
 
@@ -39,7 +39,7 @@ class AddForm extends Component {
     }
     this.setState({...this.state,
       quotes: [...this.state.quotes, quoteText],
-      quoteText: ""
+      quoteText: ''
     })
   }
 
@@ -61,32 +61,19 @@ class AddForm extends Component {
     {item}
     </option>
     return(
-      <form className="pure-form pure-form-stacked" onSubmit={this.handleSubmit.bind(this)}>
+      <form className='pure-form pure-form-stacked' onSubmit={this.handleSubmit.bind(this)}>
       <fieldset>
-      <FileInput name="documentUploader"
-      accept=".txt,.pdf,.doc,.docx"
-      placeholder="Tap to add"
-      className="inputClass"
+      <FileInput name='documentUploader'
+      accept='.txt,.pdf,.doc,.docx'
+      placeholder='Tap to add'
+      className='inputClass'
       onChange={this.onFileAdd.bind(this)} />
 
       <select
       onChange={event => this.setState({ refereed: event.target.value })}>
       {options.map(createItem)}
       </select>
-      <span className="pure-form-message">Specify if the paper can be peer reviewed.</span>
-
-      <br />
-
-      <label>
-        Quotes
-        <input id="quote" type="text" value={this.state.quoteText} onChange={this.onQuoteInputChange.bind(this)} placeholder="Paper's hash" />
-      </label>
-
-      <button className="pure-button" onClick={this.onAddQuoteClicked.bind(this)}>Quote</button>
-
-      <ul>
-        {this.state.quotes.map(quote => <li key={quote}>{quote} </li>)}
-      </ul>
+      <span className='pure-form-message'>Specify if the paper can be peer reviewed.</span>
 
       <br />
 
@@ -94,11 +81,24 @@ class AddForm extends Component {
         Description:
         <textarea value={this.state.description} onChange={this.onDescriptionInputChange.bind(this)} />
       </label>
-      <span className="pure-form-message">This field is optional.</span>
+      <span className='pure-form-message'>This is a requierd field.</span>
 
       <br />
 
-      <button type="submit" className="pure-button pure-button-primary">Register</button>
+      <label>
+        Quoted papers
+        <input id='quote' type='text' value={this.state.quoteText} onChange={this.onQuoteInputChange.bind(this)} placeholder='Paper hash' />
+      </label>
+
+      <button className='pure-button' onClick={this.onAddQuoteClicked.bind(this)}>Quote</button>
+
+      <ul>
+        {this.state.quotes.map(quote => <li key={quote}>{quote} </li>)}
+      </ul>
+
+      <br />
+
+      <button type='submit' className='pure-button pure-button-primary'>Register</button>
       </fieldset>
       </form>
     )
