@@ -28,8 +28,8 @@ class PaperDetail extends Component {
     const web3 = store.getState().web3.instance
     const { account } = store.getState().paperchain
     const { paper, quotesMade, quotesReceived, reviews } = this.props
-
     const isOwnPaper = paper.owner === account
+    const canReview = paper.refereed
     const alreadyReviewed = reviews.filter(review => review.hash === paper.hash).length > 0
     return(
       <div>
@@ -56,7 +56,7 @@ class PaperDetail extends Component {
 
       <button className='pure-button  pure-button-primary' onClick={this.onDownloadClick.bind(this)}>Download</button>
 
-      <PeerReviewForm isOwnPaper={isOwnPaper} alreadyReviewed={alreadyReviewed} onReviewClick={this.onReviewClick.bind(this)} />
+      <PeerReviewForm isOwnPaper={isOwnPaper} canReview={canReview} alreadyReviewed={alreadyReviewed} onReviewClick={this.onReviewClick.bind(this)} />
 
       </div>
     )

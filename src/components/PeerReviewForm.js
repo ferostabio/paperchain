@@ -9,7 +9,7 @@ class PaperList extends Component {
   }
 
   render() {
-    const { isOwnPaper, alreadyReviewed } = this.props
+    const { isOwnPaper, canReview, alreadyReviewed } = this.props
     if (isOwnPaper) {
       return(null)
     } else if (alreadyReviewed) {
@@ -17,6 +17,14 @@ class PaperList extends Component {
         <form>
         <h3>Peer-Review</h3>
         <span className='pure-form-message'>You already reviewed this paper.</span>
+        <br />
+        </form>
+      )
+    } else if (!canReview) {
+      return (
+        <form>
+        <h3>Peer-Review</h3>
+        <span className='pure-form-message'>You can not peer-review this paper.</span>
         <br />
         </form>
       )

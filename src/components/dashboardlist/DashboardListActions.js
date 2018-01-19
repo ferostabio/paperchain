@@ -9,13 +9,13 @@ export function onReadPaper(paper) {
 
 export function getPapers() {
   return dispatch => {
-    paperchain.getPapers().then(papers => {
+    paperchain.getPapers().then(paper => {
 
     }).catch(error => {
       console.error(error)
     })
 
-    paperchain.getFieldPapers().then(papers => {
+    paperchain.getFieldPapers().then(paper => {
 
     }).catch(error => {
       console.error(error)

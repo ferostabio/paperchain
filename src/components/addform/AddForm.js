@@ -49,8 +49,8 @@ class AddForm extends Component {
     if (file === null) {
       return alert('You need to add a file')
     }
-    const index = options.indexOf(refereed)
-    this.props.onProfileFormSubmit(file, index, description, quotes)
+    const canReview = options.indexOf(refereed) === 0
+    this.props.onProfileFormSubmit(file, canReview, description, quotes)
   }
 
   render() {
