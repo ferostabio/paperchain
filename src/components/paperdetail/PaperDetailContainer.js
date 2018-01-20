@@ -1,10 +1,11 @@
 import { connect } from 'react-redux'
 import PaperDetail from './PaperDetail'
-import { getQuotesMadeByPaper, getQuotesReceivedByPaper, getReviews, watchReviews, reviewPaper, downloadPaper } from './PaperDetailActions'
+import { getPaper, getQuotesMadeByPaper, getQuotesReceivedByPaper, getReviews, watchReviews, reviewPaper, downloadPaper } from './PaperDetailActions'
 
 const mapStateToProps = (state, ownProps) => {
   return {
-    paper: ownProps.paper,
+    hash: ownProps.hash,
+    paper: state.detail.paper,
     quotesMade: state.detail.quotesMade,
     quotesReceived: state.detail.quotesReceived,
     reviews: state.detail.reviews
@@ -13,6 +14,7 @@ const mapStateToProps = (state, ownProps) => {
 
 const mapDispatchToProps = dispatch => {
   return {
+    getPaper: hash => dispatch(getPaper(hash)),
     getQuotesMadeByPaper: paper => dispatch(getQuotesMadeByPaper(paper)),
     getQuotesReceivedByPaper: paper => dispatch(getQuotesReceivedByPaper(paper)),
     getReviews: paper => dispatch(getReviews(paper)),

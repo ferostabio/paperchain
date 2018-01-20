@@ -5,7 +5,7 @@ const CryptoJS = require('crypto-js')
 const contract = require('truffle-contract')
 
 import { USER_LOGGED_IN } from './reducers/userReducer'
-import { UPDATED_QUOTES_MADE, UPDATED_QUOTES_RECEIVED, GOT_REVIEWS, UPDATED_REVIEWS } from './reducers/detailReducer'
+import { GOT_PAPER, UPDATED_QUOTES_MADE, UPDATED_QUOTES_RECEIVED, GOT_REVIEWS, UPDATED_REVIEWS } from './reducers/detailReducer'
 import { GOT_PAPERS, UPDATED_PAPERS, GOT_FIELD_PAPERS, UPDATED_FIELD_PAPERS } from './reducers/paperchainReducer'
 
 let watchPapersEvent
@@ -154,6 +154,18 @@ function loadPaper(hash) {
   })
 }
 
+function getPaper(hash) {
+  return new Promise((resolve, reject) => {
+    loadPaper(hash).then(paper => {
+      // Because the dispatch shows up here :-)
+      const payload = { type: GOT_PAPER, paper: paper }
+      resolve(store.dispatch(payload))
+    }).catch(error => {
+      reject(error)
+    })
+  })
+}
+
 function getQuotesMadeByPaper(paper) {
   return getQuotes({from: paper.hash})
 }
@@ -295,6 +307,7 @@ module.exports.getReviews = getReviews
 module.exports.watchReviews = watchReviews
 module.exports.stopWatchingReviews = stopWatchingReviews
 
+module.exports.getPaper = getPaper
 module.exports.getQuotesMadeByPaper = getQuotesMadeByPaper
 module.exports.getQuotesReceivedByPaper = getQuotesReceivedByPaper
 

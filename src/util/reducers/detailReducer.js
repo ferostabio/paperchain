@@ -1,9 +1,11 @@
 const initialState = {
+  paper: null,
   quotesMade: [],
   quotesReceived: [],
   reviews: []
 }
 
+export const GOT_PAPER = 'GOT_PAPER'
 export const UPDATED_QUOTES_MADE = 'UPDATED_QUOTES_MADE'
 export const UPDATED_QUOTES_RECEIVED = 'UPDATED_QUOTES_RECEIVED'
 export const GOT_REVIEWS = 'GOT_REVIEWS'
@@ -12,6 +14,12 @@ export const UPDATED_REVIEWS = 'UPDATED_REVIEWS'
 // The paper should be stored this way too, but i wanted to see how to pass params with react-router
 
 const detailReducer = (state = initialState, action) => {
+  if (action.type === GOT_PAPER) {
+    return {
+      ...state,
+      paper: action.paper
+    }
+  }
   if (action.type === UPDATED_QUOTES_MADE) {
     return {
       ...state,

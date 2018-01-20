@@ -1,7 +1,29 @@
 import { browserHistory } from 'react-router'
+import thunk from 'redux-thunk'
 import paperchain from '../../util/paperchain'
 import store from '../../store'
 const fileDownload = require("js-file-download")
+
+export function getPaper(hash) {
+  return function (dispatch) {
+    paperchain.getPaper(hash).then(action => {
+      dispatch(getInfo(action.paper))
+    }).catch(error => {
+      console.error(error)
+    })
+  }
+}
+
+function getInfo(paper) {
+  return function (dispatch) {
+    Promise.all([
+      dispatch(getQuotesMadeByPaper(paper)),
+      dispatch(getQuotesReceivedByPaper(paper)),
+      dispatch(getReviews(paper)),
+      dispatch(watchReviews(paper)),
+    ])
+  }
+}
 
 export function getQuotesMadeByPaper(paper) {
   return dispatch => {

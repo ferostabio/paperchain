@@ -43,7 +43,7 @@ ReactDOM.render((
           <Route path='dashboard' component={UserIsAuthenticated(Dashboard)} />
           <Route path='signup' component={UserIsNotAuthenticated(SignUp)} />
           <Route path='add' component={UserIsAuthenticated(Add)} />
-          <Route path='paper' component={UserIsAuthenticated(Paper)} />
+          <Route path='paper/:hash' component={UserIsAuthenticated(Paper)} />
         </Route>
       </Router>
     </Provider>

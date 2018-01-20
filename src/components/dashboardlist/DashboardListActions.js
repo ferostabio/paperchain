@@ -1,9 +1,11 @@
 import { browserHistory } from 'react-router'
 import paperchain from '../../util/paperchain'
+import store from '../../store'
 
 export function onReadPaper(paper) {
   return dispatch => {
-    return browserHistory.push({pathname:'/paper', state: { paper: paper}})
+    const web3 = store.getState().web3.instance
+    return browserHistory.push('/paper/' + web3.toAscii(paper.hash))
   }
 }
 
